@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geometric Visibility Lab · v4</title>
+<style>/*STYLES*/</style>
+</head>
+<body>
+<main>
+<section id="presentation" aria-label="Interactive visibility lab">
+<header class="lab-header">
+<h1>Geometric Visibility Lab <small>v4</small></h1>
+<nav id="nav" aria-label="Demonstration tabs"></nav>
+</header>
+<div id="stage">
+<div class="graphic"><svg id="view" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" aria-label="Interactive visibility construction"></svg></div>
+<aside id="explanation" aria-labelledby="explanationTitle">
+<h2 id="explanationTitle"></h2>
+<div id="explanationBody"></div>
+<div id="explanationFooter"></div>
+</aside>
+</div>
+<div class="transport" aria-label="Animation controls">
+<button class="primary" id="play">Play</button>
+<button id="restart">Restart</button>
+<button id="prev" title="Previous construction step (←)">Previous step</button>
+<button id="next" title="Next construction step (→)">Next step</button>
+<input id="phase" type="range" min="0" max="1" step=".001" value="0" aria-label="Construction progress">
+<output id="phaseVal" for="phase">0%</output>
+<label>Loop <select id="duration" aria-label="Animation loop duration"><option>6</option><option>8</option><option selected>12</option><option>16</option><option>24</option><option>40</option></select> s</label>
+<button id="fullscreen">Full screen</button>
+</div>
+<div class="settings" id="controls" aria-label="Demonstration settings"></div>
+<div class="toolrow" aria-label="Export and settings tools">
+<label>Export <select id="exportMode"><option value="graphics">Graphics only</option><option value="panel">Graphic + explanation panel</option></select></label>
+<button id="png">Save PNG</button>
+<button id="svg">Save SVG</button>
+<button id="save">Save settings</button>
+<label class="filebtn">Load settings<input id="load" type="file" accept=".json,application/json"></label>
+<button id="reset">Reset this tab</button>
+<button id="tests">Run geometry checks</button>
+<label class="check panel-option"><input id="panelToggle" type="checkbox" checked>Explanation panel</label>
+</div>
+<div class="demo-notes"><p id="help" class="help"></p><p id="status" role="status" aria-live="polite"></p></div>
+</section>
+<section class="docs" aria-label="Calculation reference">
+<h2 id="docTitle"></h2>
+<div id="liveText" aria-live="polite"></div>
+<div id="benchmarkTable"></div>
+<details open><summary>How this calculation works</summary><div id="methodDoc"></div></details>
+<details><summary>Implementation details and precision</summary><div id="detailDoc"></div></details>
+<details><summary>Computational effort and which method to choose</summary><div id="costDoc"></div></details>
+<details><summary>Sources and interpretation</summary><div id="sourceDoc"></div></details>
+</section>
+</main>
+<footer class="page-footer"><p><kbd>1</kbd>–<kbd>8</kbd> select tabs · <kbd>Space</kbd> plays / pauses · <kbd>←</kbd> / <kbd>→</kbd> step through the construction. Drag the purple observer; drag a 3D background to orbit the illustration camera. Synthetic scenes use meters. Positive-area polygon results use floating-point arithmetic. SVG rendering is separate from the visibility solver.</p></footer>
+<script>/*SCRIPTS*/</script>
+</body>
+</html>
