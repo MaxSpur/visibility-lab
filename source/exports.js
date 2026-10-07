@@ -11,7 +11,7 @@ function panelTextSVG(root,origin){
   const parts=[],walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   while(walker.nextNode()){
     const node=walker.currentNode,parent=node.parentElement,style=getComputedStyle(parent);
-    if(!node.textContent.trim()||style.display==='none'||style.visibility==='hidden')continue;
+    if(!node.textContent.trim()||parent.closest('select,option')||style.display==='none'||style.visibility==='hidden')continue;
     const range=document.createRange();let run=null;
     function flush(){if(!run)return;const size=parseFloat(style.fontSize),baseline=run.bottom-size*.21;parts.push('<text x="'+svgNumber(run.x-origin.left)+'" y="'+svgNumber(baseline-origin.top)+'" font-family="'+escapeSVG(style.fontFamily)+'" font-size="'+svgNumber(size)+'" font-weight="'+escapeSVG(style.fontWeight)+'" font-style="'+escapeSVG(style.fontStyle)+'" fill="'+escapeSVG(style.color)+'" xml:space="preserve" textLength="'+svgNumber(run.right-run.x)+'" lengthAdjust="spacingAndGlyphs">'+escapeSVG(run.text)+'</text>');run=null;}
     for(let i=0;i<node.textContent.length;i++){
@@ -25,12 +25,18 @@ function panelTextSVG(root,origin){
   }
   return parts.join('');
 }
+function panelControlsSVG(root,origin){
+  return [...root.querySelectorAll('select')].map(el=>{
+    const r=el.getBoundingClientRect(),style=getComputedStyle(el),x=r.left-origin.left,y=r.top-origin.top,size=parseFloat(style.fontSize),padding=parseFloat(style.paddingLeft)+parseFloat(style.borderLeftWidth),label=el.selectedOptions[0]?.textContent||'';
+    return '<rect x="'+svgNumber(x)+'" y="'+svgNumber(y)+'" width="'+svgNumber(r.width)+'" height="'+svgNumber(r.height)+'" fill="'+escapeSVG(style.backgroundColor)+'" stroke="'+escapeSVG(style.borderTopColor)+'" stroke-width="'+escapeSVG(style.borderTopWidth)+'"/><text x="'+svgNumber(x+padding)+'" y="'+svgNumber(y+r.height/2+size*.34)+'" font-family="'+escapeSVG(style.fontFamily)+'" font-size="'+svgNumber(size)+'" font-weight="'+escapeSVG(style.fontWeight)+'" fill="'+escapeSVG(style.color)+'">'+escapeSVG(label)+'</text>';
+  }).join('');
+}
 function panelSVG(){
   const stage=$('stage').getBoundingClientRect(),graphic=view.getBoundingClientRect(),panel=$('explanation'),r=panel.getBoundingClientRect();
   const copy=view.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('aria-label');copy.removeAttribute('xmlns');
   copy.setAttribute('x',svgNumber(graphic.left-stage.left));copy.setAttribute('y',svgNumber(graphic.top-stage.top));copy.setAttribute('width',svgNumber(graphic.width));copy.setAttribute('height',svgNumber(graphic.height));
   const boxes=[...panel.querySelectorAll('[data-svg-box]')].map(el=>{const b=el.getBoundingClientRect(),c=getComputedStyle(el).backgroundColor;return '<rect x="'+svgNumber(b.left-stage.left)+'" y="'+svgNumber(b.top-stage.top)+'" width="'+svgNumber(b.width)+'" height="'+svgNumber(b.height)+'" fill="'+escapeSVG(c)+'"/>';}).join('');
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+svgNumber(stage.width)+'" height="'+svgNumber(stage.height)+'" viewBox="0 0 '+svgNumber(stage.width)+' '+svgNumber(stage.height)+'"><rect width="100%" height="100%" fill="white"/>'+new XMLSerializer().serializeToString(copy)+'<rect x="'+svgNumber(r.left-stage.left)+'" y="0" width="'+svgNumber(r.width)+'" height="'+svgNumber(stage.height)+'" fill="#f3f7f7"/><line x1="'+svgNumber(r.left-stage.left)+'" x2="'+svgNumber(r.left-stage.left)+'" y1="0" y2="'+svgNumber(stage.height)+'" stroke="#c8d5da"/>'+boxes+panelTextSVG(panel,stage)+'</svg>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+svgNumber(stage.width)+'" height="'+svgNumber(stage.height)+'" viewBox="0 0 '+svgNumber(stage.width)+' '+svgNumber(stage.height)+'"><rect width="100%" height="100%" fill="white"/>'+new XMLSerializer().serializeToString(copy)+'<rect x="'+svgNumber(r.left-stage.left)+'" y="0" width="'+svgNumber(r.width)+'" height="'+svgNumber(stage.height)+'" fill="#f3f7f7"/><line x1="'+svgNumber(r.left-stage.left)+'" x2="'+svgNumber(r.left-stage.left)+'" y1="0" y2="'+svgNumber(stage.height)+'" stroke="#c8d5da"/>'+boxes+panelControlsSVG(panel,stage)+panelTextSVG(panel,stage)+'</svg>';
 }
 function svgForExport(mode=state.exportMode){
   try{render({panel:mode==='panel'});return mode==='panel'?panelSVG():graphicSVG();}

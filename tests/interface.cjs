@@ -1,9 +1,9 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
-const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'/Users/MadMax/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html';
-const scratch=path.resolve(__dirname,'../../.codex-scratch.nosync/v4');
+const scratch=path.resolve(__dirname,'../.codex-scratch.nosync');
 fs.mkdirSync(scratch,{recursive:true});
 (async()=>{
   const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1920,height:1080},acceptDownloads:true}),errors=[],remote=[];

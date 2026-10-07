@@ -1,36 +1,43 @@
-/* The baseline is the original Astra HTML, never another regenerated v4 file.
-   Timings are excluded: query results and operation counts must stay unchanged. */
+/* Pin the original Astra core. Compare original outputs when its parent HTML
+   is available; standalone clones verify the pin and independent invariants.
+   Timings are excluded from comparisons. */
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
-const root = path.resolve(__dirname, '../..');
-const original = fs.readFileSync(path.join(root, 'visibility-lab-v3-astra.html'), 'utf8');
-const start = original.indexOf('<script>');
-const end = original.indexOf('/* Graphics-only renderer.', start);
-assert(start >= 0 && end > start, 'Original geometry extraction boundaries exist');
-const baselineSource = original.slice(start + '<script>'.length, end).trim();
-const currentSource = fs.readFileSync(path.join(root, 'visibility-lab-v4/source/geometry.js'), 'utf8').trim();
+const root = path.resolve(__dirname, '..');
+const originalPath = path.join(root, '..', 'visibility-lab-v3-astra.html');
+const currentSource = fs.readFileSync(path.join(root, 'source/geometry.js'), 'utf8').trim();
 const hash = source => crypto.createHash('sha256').update(source).digest('hex');
-assert.equal(hash(baselineSource), '3a227e00249c813c577ec4790c809abe8b3eaacc25dc0233313c5c54b233b0ee', 'The original Astra geometry baseline has not changed');
-assert.equal(currentSource, baselineSource, 'v4 preserves the complete original geometry source byte for byte, ignoring outer whitespace');
+const pinnedHash = '3a227e00249c813c577ec4790c809abe8b3eaacc25dc0233313c5c54b233b0ee';
+assert.equal(hash(currentSource), pinnedHash, 'v4 preserves the original Astra computational core');
+let baselineSource = null;
+if (fs.existsSync(originalPath)) {
+  const original = fs.readFileSync(originalPath, 'utf8');
+  const start = original.indexOf('<script>');
+  const end = original.indexOf('/* Graphics-only renderer.', start);
+  assert(start >= 0 && end > start, 'Original geometry extraction boundaries exist');
+  baselineSource = original.slice(start + '<script>'.length, end).trim();
+  assert.equal(hash(baselineSource), pinnedHash, 'The original Astra geometry baseline has not changed');
+  assert.equal(currentSource, baselineSource, 'v4 preserves the complete original geometry source byte for byte, ignoring outer whitespace');
+}
 function context(source) {
   const ctx = vm.createContext({console, performance: {now: () => 0}});
   vm.runInContext(source, ctx, {timeout: 30000});
   vm.runInContext('SCENES.forEach(s => {s.mesh=meshFor(s);});', ctx);
   return ctx;
 }
-const baseline = context(baselineSource), current = context(currentSource);
+const baseline = baselineSource ? context(baselineSource) : null, current = context(currentSource);
 function evaluate(ctx, code) {
   // JSON normalizes VM realms. No timers appear in the fixture summaries.
   return JSON.parse(vm.runInContext(`JSON.stringify((()=>{${code}})())`, ctx, {timeout:120000}));
 }
 let checks = 0;
 function match(name, code, inspect) {
-  const expected = evaluate(baseline, code), actual = evaluate(current, code);
-  assert.deepEqual(actual, expected, `${name}: results and operation counts match original Astra`);
+  const actual = evaluate(current, code);
+  if (baseline) assert.deepEqual(actual, evaluate(baseline, code), `${name}: results and operation counts match original Astra`);
   if (inspect) inspect(actual);
   checks++;
   console.log(`✓ ${name}`);
@@ -106,4 +113,4 @@ for (const [nx,ny,qxy,height] of [[4,3,[18,24],8],[6,4,[38,34],4],[10,7,[9,35],8
     });
   });
 }
-console.log(`Passed ${checks} matched fixtures; geometry source is unchanged from original Astra.`);
+console.log(`Passed ${checks} ${baseline?'matched baseline':'independent invariant'} fixtures; geometry source matches the pinned original Astra core.`);

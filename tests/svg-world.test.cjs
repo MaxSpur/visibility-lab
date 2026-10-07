@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert'),{performance}=require('perf_hooks');
-const root=__dirname+'/../source/',baseline=fs.readFileSync(__dirname+'/../../visibility-lab-v3-astra.html','utf8');
-function baselineFunction(name){const start=baseline.indexOf('function '+name+'(');let depth=0;for(let i=baseline.indexOf('{',start);i<baseline.length;i++){if(baseline[i]==='{')depth++;if(baseline[i]==='}'&&!--depth)return baseline.slice(start,i+1);}throw Error(name);}
-vm.runInThisContext(fs.readFileSync(root+'geometry.js','utf8')+'\nconst C={wall:"#cccccc",wallLine:"#777777"};\n'+baselineFunction('rgb')+'\n'+baselineFunction('camera3')+'\n'+fs.readFileSync(root+'svg-world.js','utf8')+'\nglobalThis.svgAPI={worldSVG,camera3,makeTerrain3,area,inside,lerp};');
+const root=__dirname+'/../source/',drawing=fs.readFileSync(root+'svg-context.js','utf8');
+function drawingFunction(name){const start=drawing.indexOf('function '+name+'(');let depth=0;for(let i=drawing.indexOf('{',start);i<drawing.length;i++){if(drawing[i]==='{')depth++;if(drawing[i]==='}'&&!--depth)return drawing.slice(start,i+1);}throw Error(name);}
+vm.runInThisContext(fs.readFileSync(root+'geometry.js','utf8')+'\nconst C={wall:"#cccccc",wallLine:"#777777"};\n'+drawingFunction('rgb')+'\n'+drawingFunction('camera3')+'\n'+fs.readFileSync(root+'svg-world.js','utf8')+'\nglobalThis.svgAPI={worldSVG,camera3,makeTerrain3,area,inside,lerp};');
 const {worldSVG,camera3,makeTerrain3,area,inside,lerp}=globalThis.svgAPI;
 const cam={rect:{x:0,y:0,w:10,h:10},p:p=>p.slice(0,2),depth:p=>p[2]},face=(z,color='#ff0000',alpha=1)=>({poly:[[0,0,z(0,0)],[10,0,z(10,0)],[10,10,z(10,10)],[0,10,z(0,10)]],color,alpha,shade:false});
 function polygons(svg){return [...svg.matchAll(/<polygon data-world-face="(\d+)" points="([^"]+)"[^>]*>/g)].map(m=>({index:+m[1],poly:m[2].split(' ').map(s=>s.split(',').map(Number))}));}

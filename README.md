@@ -1,21 +1,59 @@
-# Geometric Visibility Lab v4
+# Geometric Visibility Lab
 
-Open `visibility-lab-v4.html` in a browser. It is a portable, offline file with no installation or network dependencies. This version is based on the root-level `visibility-lab-v3-astra.html`.
+An interactive laboratory for explaining continuous visibility, shadows, triangle expansion and sampling in 2D and 3D. The synthetic examples are intended for seminar demonstrations and slide illustrations.
 
-The demonstration occupies one screen at 3840 × 2160 and 1920 × 1080. **Full screen** expands the whole page, including tabs and controls. Detailed method notes remain below the demonstration during normal browsing. Escape exits fullscreen.
+## Open the lab
 
-Drag the purple observer to move it, or drag a 3D background to orbit the illustration camera. Use the progress slider or Previous / Next step to inspect a construction. Keys 1–8 select a tab, Space plays or pauses, and the arrow keys step through the construction.
+Open `visibility-lab-v4.html` directly in a browser. The single HTML file works offline without installation or network access. Alternatively, serve this directory:
 
-The live diagrams are native SVG and the adjacent explanations are selectable HTML. Titles reserve two lines so explanation text stays in place. Use the bottom **Explanation panel** checkbox to give the diagram more room.
+```sh
+python3 -m http.server 8764 --bind 127.0.0.1
+```
 
-**Save SVG** exports editable vector graphics. The export selector chooses graphics alone or graphics with the current explanation. **Save PNG** rasterizes that same export at 3840 pixels wide. Recording controls have been removed. Save / Load settings preserves the demonstration configuration; existing Astra v3 settings are accepted.
+Then open [the lab](http://127.0.0.1:8764/). `index.html` forwards to the lab while preserving query parameters and the URL fragment. The repository can serve as a static GitHub Pages site; publishing and repository settings are separate steps.
 
-The visibility calculations and scientific examples are preserved from Astra v3. SVG display clipping handles opaque occlusion separately from the visibility calculations. Transparent construction faces use the same depth ordering as the baseline. Very dense sample displays can take longer to draw; calculated sample counts remain separate from the number of rays drawn.
+## Use the demonstrations
 
-## Editing and validation
+Choose a tab, then select its construction mode in the dropdown above the explanation title. Play, scrub the progress slider, or use Previous / Next step to examine the sequence. Larger titles and step explanations accompany the diagram; statistics sit immediately above its legend. Hide the explanation panel to enlarge the graphic. **Full screen** expands the whole page, including controls; Esc exits.
 
-Edit the files in `source/`, then run `python3 visibility-lab-v4/build.py` from the project root. The builder embeds the styles and scripts into the portable HTML. `--check` verifies that the deliverable matches its sources.
+Drag the purple observer to move it. Drag a 3D background to rotate the illustration naturally with horizontal pointer movement. Camera angle controls display degrees to one decimal place, with a full azimuth circle and elevations from 1° to 89°; settings files continue to store radians for compatibility with Astra v3. Keys 1–8 select tabs, Space plays or pauses, and arrow keys step through a construction.
 
-`geometry.js` contains the preserved computational core; `svg-context.js` and `svg-world.js` draw vector graphics; `scenes.js` defines demonstrations and benchmarks; `panels.js`, `controls.js`, `exports.js`, and `runtime.js` handle the interface. `reference-notes.js` contains method explanations and source links.
+The lab covers building shadows, 2D triangle expansion and point location, terrain beams through air cells, terrain-face shadow cuts, projected terrain fragments, geometry versus sampled surfaces, computational effort, and angular events. Detailed explanations and sources are below the demonstration.
 
-Run `node visibility-lab-v4/tests/geometry-baseline.cjs` and `node visibility-lab-v4/tests/svg-world.test.cjs` to check computational equivalence and vector occlusion. Browser layout and interaction checks are in `tests/layout.cjs` and `tests/interface.cjs`; they use the bundled Playwright runtime. Start their development preview with `python3 -m http.server 8764 --bind 127.0.0.1 --directory visibility-lab-v4` from the project root. Generated screenshots, downloads and reports go in `.codex-scratch.nosync/v4/`.
+## Export illustrations
+
+**Save SVG** exports editable vectors. Choose graphics alone or graphics with the current explanation panel. **Save PNG** rasterizes the same export at 3840 pixels wide. Save / Load settings preserves the current configuration and accepts existing Astra v3 settings. Video recording is not included.
+
+## Accuracy and limits
+
+The computations are preserved from Astra v3. Continuous polygons use floating-point arithmetic and omit tangential zero-area features; they are not certified exact arithmetic. Terrain is synthetic and has no overhangs, vegetation, Earth curvature or refraction. Geometry, directional sampling, surface sampling and rasterization produce different approximations; the benchmark reports local CPU JavaScript work, not a universal performance ranking.
+
+SVG occlusion handles opaque display surfaces separately from the visibility calculation. Transparent construction faces use depth ordering. Dense sample displays can draw more slowly; calculated sample counts are distinct from the rays actually drawn. Screen layout is checked at 1920 × 1080 and 3840 × 2160.
+
+## Develop and check
+
+Run commands from this repository directory. Python 3 builds the self-contained deliverable; Node runs geometry and SVG checks:
+
+```sh
+python3 build.py
+python3 build.py --check
+node tests/geometry-baseline.cjs
+node tests/svg-world.test.cjs
+```
+
+Browser tests require Playwright and Chromium. Use an existing installation by setting `PLAYWRIGHT_MODULE` to its module path, or install development tools locally:
+
+```sh
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+```
+
+With the preview server running on port 8764:
+
+```sh
+node tests/layout.cjs
+node tests/interface.cjs
+node tests/shared-ui.cjs
+```
+
+Tests write screenshots and downloads to the ignored `.codex-scratch.nosync/` directory. Geometry checks pin the original computational core and exercise independent invariants; when the original Astra HTML is present in the parent directory, they additionally compare its outputs. See [AGENTS.md](AGENTS.md) for source orientation and editing conventions.

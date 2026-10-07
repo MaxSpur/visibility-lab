@@ -1,9 +1,22 @@
+const DEGREES=180/Math.PI;
+const MIN_CAMERA_ELEVATION=1/DEGREES,MAX_CAMERA_ELEVATION=89/DEGREES;
+function cameraAzimuth(value){return value < -Math.PI || value >= Math.PI ? wrap(value+Math.PI)-Math.PI : value;}
 function buildDocs(){const d=DOCS[state.scene];$('docTitle').textContent=d.title;$('methodDoc').innerHTML=d.method;$('detailDoc').innerHTML=d.detail;$('costDoc').innerHTML=COST_HTML;$('sourceDoc').innerHTML=SOURCES_HTML;renderBenchmarkTable();}
 function selectControl(label,key,options,after){const el=document.createElement('label');el.className='setting';const span=document.createElement('span');span.textContent=label;const input=document.createElement('select');input.dataset.key=key;input.setAttribute('aria-label',label);options.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;input.append(o);});input.value=state[key];input.onchange=()=>{stopPlaying();state[key]=typeof DEFAULT[key]==='number'?+input.value:input.value;after?.();state=validate(state);buildControls();buildDocs();render();};el.append(span,input);return el;}
-function sliderControl(label,key,min,max,step=1,get=null,set=null){const el=document.createElement('label');el.className='setting';const span=document.createElement('span');span.textContent=label;const row=document.createElement('div');row.className='rangeflex';const a=document.createElement('input'),b=document.createElement('input');a.type='range';b.type='number';for(const i of [a,b]){i.min=min;i.max=max;i.step=step;i.value=get?get():state[key];i.dataset.key=key;i.setAttribute('aria-label',label+(i===b?' value':''));}const act=i=>{stopPlaying();const v=clamp(+i.value,min,max);if(set)set(v);else state[key]=v;a.value=b.value=v;render();};a.oninput=()=>act(a);b.onchange=()=>act(b);row.append(a,b);el.append(span,row);return el;}
+function sliderControl(label,key,min,max,step=1,get=null,set=null,digits=null){
+ const el=document.createElement('label');el.className='setting';
+ const span=document.createElement('span');span.textContent=label;
+ const row=document.createElement('div');row.className='rangeflex';
+ const a=document.createElement('input'),b=document.createElement('input');a.type='range';b.type='number';
+ const read=()=>get?get():state[key],format=v=>digits===null?String(v):Number(v).toFixed(digits);
+ for(const i of [a,b]){i.min=min;i.max=max;i.step=step;i.value=format(read());i.dataset.key=key;i.setAttribute('aria-label',label+(i===b?' value':''));}
+ const act=i=>{stopPlaying();let v=Number(i.value);if(i.value===''||!Number.isFinite(v)){a.value=b.value=format(read());return;}v=clamp(v,min,max);if(digits!==null)v=Number(v.toFixed(digits));if(set)set(v);else state[key]=v;a.value=b.value=format(read());render();};
+ a.oninput=()=>act(a);b.onchange=()=>act(b);row.append(a,b);el.append(span,row);return el;
+}
+function angleControl(label,key,min,max){const el=sliderControl(label+' (°)',key,min,max,.1,()=>state[key]*DEGREES,v=>state[key]=key==='yaw'?cameraAzimuth(v/DEGREES):v/DEGREES,1);el.classList.add('angle-control');return el;}
 function checkControl(label,key){const el=document.createElement('label');el.className='check';const a=document.createElement('input');a.type='checkbox';a.checked=!!state[key];a.dataset.key=key;a.onchange=()=>{state[key]=a.checked;render();};el.append(a,document.createTextNode(label));return el;}
 function actionControl(text,fn,primary=false){const b=document.createElement('button');b.textContent=text;if(primary)b.className='primary';b.onclick=fn;return b;}
-function buildControls(){const m=MODES.find(m=>m.id===state.scene);document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.id===state.scene));const c=$('controls');c.replaceChildren();c.append(selectControl('Demonstration','variant',m.variants,()=>state.phase=0));
+function buildControls(){const m=MODES.find(m=>m.id===state.scene);document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.id===state.scene));const c=$('controls');c.replaceChildren();$('demonstrationControls').replaceChildren();const demonstration=selectControl('Demonstration','variant',m.variants,()=>state.phase=0);demonstration.classList.add('demonstration-setting');$('demonstrationControls').append(demonstration);placeDemonstrationControl(state.panel);
  if(['metrics','cost'].includes(state.scene))c.append(selectControl('Dimension','dimension',[['2d','2D: planar area / walls'],['3d','3D: terrain surface area']],()=>{state.phase=0;state.shadowEnvelope=false;}));
  const is2=['expansion','events'].includes(state.scene)||['metrics','cost'].includes(state.scene)&&state.dimension==='2d';
  const is3=['air','terrain','projection'].includes(state.scene)||['metrics','cost'].includes(state.scene)&&state.dimension==='3d';
@@ -21,7 +34,7 @@ function buildControls(){const m=MODES.find(m=>m.id===state.scene);document.quer
  if(state.scene==='metrics'){c.append(checkControl('Draw sample rays','showRays'),sliderControl('Maximum rays drawn (all are calculated)','rayDrawLimit',16,2048,16));}
  else{const b=actionControl(benchmarkBusy?'Benchmark running…':'Run measured comparison',runBenchmark,true);b.disabled=benchmarkBusy;c.append(b);if(benchResult)c.append(actionControl('Export measured results',()=>download(new Blob([JSON.stringify(benchResult,null,2)],{type:'application/json'}),'visibility-benchmark.json')));}}
  if(state.scene==='events')c.append(checkControl('Show hidden-corner candidates','candidates'));
- if(is3||state.scene==='shadows'){c.append(sliderControl('Illustration azimuth','yaw',-3.14,3.14,.01),sliderControl('Illustration elevation','pitch',.22,1.46,.01));}
+ if(is3||state.scene==='shadows'){c.append(angleControl('Illustration azimuth','yaw',-180,180),angleControl('Illustration elevation','pitch',1,89));}
  c.append(checkControl('Small object / vertex labels','labels'));$('panelToggle').checked=state.panel;$('exportMode').value=state.exportMode;$('duration').value=String(state.duration);$('play').textContent=playing?'Pause':'Play';
  $('help').textContent=is2?'Drag the purple observer in free space. ← / → step through the construction.':'Drag the purple observer to move it; drag the background to orbit the illustration camera.';
 }
