@@ -29,5 +29,5 @@ function render(overrides={}){
   try{({shadows:drawShadows,expansion:drawExpansion,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);drawPanel(s);}
   catch(e){console.error(e);setPanel({title:'This configuration could not be completed',body:[e.message,'Reset the scene or use a coarser terrain mesh.'],legend:[],note:'The calculation stopped; the result is incomplete.'});drawPanel(s);$('status').textContent=e.message;window.lastLabError=e.message;}
   ctx.commit();
-  if(!exporting){updateLive();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}
+  if(!exporting){syncTransport();updateLive();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}
 }

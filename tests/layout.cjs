@@ -17,6 +17,7 @@ fs.mkdirSync(OUT,{recursive:true});
   const {modes,defaults}=await page.evaluate(()=>({modes:MODES.map(m=>({id:m.id,variants:m.variants.map(v=>v[0])})),defaults:visibilityLab.getState()}));
   const cases=[];
   for(const mode of modes)for(const variant of mode.variants)for(const phase of [0,.5,1])for(const panel of [true,false])cases.push({scene:mode.id,variant,phase,panel});
+  for(const phase of [0,.35,.65,1])for(const panel of [true,false])cases.push({scene:'shadows',variant:'construct',phase,panel,construction:false});
   // Dense controls are layout-sensitive; solver budgets are low because this
   // test checks DOM layout, with numerical/high-density gates tested elsewhere.
   for(const sampler of ['surface','angular','raster'])for(const scene of ['metrics','cost'])for(const panel of [true,false])cases.push({scene,variant:scene==='metrics'?'still':'bench',phase:.5,panel,dimension:'3d',sampler,sampleBudget:140,cubeN:4,showRays:true,shadowEnvelope:true,sampleWire:true});

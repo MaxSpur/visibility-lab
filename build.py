@@ -5,7 +5,7 @@ import argparse
 
 ROOT = Path(__file__).resolve().parent
 MODULES = (
-    'geometry', 'svg-context', 'svg-world', 'reference-notes',
+    'geometry', 'receiver-boundaries', 'svg-context', 'svg-world', 'reference-notes',
     'scenes', 'panels', 'controls', 'exports', 'runtime',
 )
 

@@ -14,7 +14,7 @@ Then open [the lab](http://127.0.0.1:8764/). `index.html` forwards to the lab wh
 
 ## Use the demonstrations
 
-Choose a tab, then select its construction mode in the dropdown above the explanation title. Play, scrub the progress slider, or use Previous / Next step to examine the sequence. Larger titles and step explanations accompany the diagram; statistics sit immediately above its legend. Hide the explanation panel to enlarge the graphic. **Full screen** expands the whole page, including controls; Esc exits.
+Choose a tab. Shadow construction has one sequence: its plan inset follows the same stage and projects the highlighted faces, silhouettes, and extrusions from above. Turn off **Show construction** for the final shaded ground, roofs, and walls, without construction geometry or cut outlines. Other tabs offer a mode dropdown above the explanation title. Play, scrub the progress slider, or use Previous / Next step to examine the sequence. Larger titles and step explanations accompany the diagram; statistics sit immediately above its legend. Hide the explanation panel to enlarge the graphic. **Full screen** expands the whole page, including controls; Esc exits.
 
 Drag the purple observer to move it. Drag a 3D background to rotate the illustration naturally with horizontal pointer movement. Camera angle controls display degrees to one decimal place, with a full azimuth circle and elevations from 1° to 89°; settings files continue to store radians for compatibility with Astra v3. Keys 1–8 select tabs, Space plays or pauses, and arrow keys step through a construction.
 
@@ -39,6 +39,7 @@ python3 build.py
 python3 build.py --check
 node tests/geometry-baseline.cjs
 node tests/svg-world.test.cjs
+node tests/receiver-boundaries.test.cjs
 ```
 
 Browser tests require Playwright and Chromium. Use an existing installation by setting `PLAYWRIGHT_MODULE` to its module path, or install development tools locally:
@@ -54,6 +55,7 @@ With the preview server running on port 8764:
 node tests/layout.cjs
 node tests/interface.cjs
 node tests/shared-ui.cjs
+node tests/shadows.cjs
 ```
 
 Tests write screenshots and downloads to the ignored `.codex-scratch.nosync/` directory. Geometry checks pin the original computational core and exercise independent invariants; when the original Astra HTML is present in the parent directory, they additionally compare its outputs. See [AGENTS.md](AGENTS.md) for source orientation and editing conventions.

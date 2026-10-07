@@ -78,6 +78,7 @@ h1 small { font-size:.62em; color:var(--teal); font-weight:600; border:1px solid
 .setting>span { display:block; margin-bottom:.12rem; font-size:.78rem; line-height:1.2; font-weight:650; }
 .setting select { width:100%; font-size:.88rem; }
 #demonstrationControls { flex:none; }
+#demonstrationControls:empty { display:none; }
 .demonstration-setting { max-width:none; min-width:0; width:100%; }
 .demonstration-setting>span { font-size:.92rem; margin-bottom:.3rem; }
 .demonstration-setting select { font-size:1.04rem; font-weight:600; padding:.55rem .4rem; border-color:var(--teal); }

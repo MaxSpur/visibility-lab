@@ -1,5 +1,5 @@
 const MODES=[
- {id:'shadows',name:'1 · Shadow construction',variants:[['construct','Construct, then paint every receiver'],['move','Move the source'],['surface','Inspect complete surface shadows'],['isovist','Optional: complementary visible air']]},
+ {id:'shadows',name:'1 · Shadow construction',variants:[['construct','Shadow construction']]},
  {id:'expansion',name:'2 · Expanding triangles',variants:[['expand','Locate → expand the complete isovist'],['locate','Find the observer triangle'],['opening','Inspect one clipped opening'],['subtract','Contrast: subtract wall shadows']]},
  {id:'air',name:'3 · Terrain: beams',variants:[['branch','Follow one beam, face by face'],['expand','Accumulate all terrain beams'],['result','Inspect the complete viewshed']]},
  {id:'terrain',name:'4 · Terrain: shadow cuts',variants:[['one','Only the highlighted face’s shadow'],['all','Subtract every terrain-face shadow'],['result','Inspect the complete viewshed']]},
@@ -8,7 +8,7 @@ const MODES=[
  {id:'cost',name:'7 · Effort and raster',variants:[['bench','Benchmark matched outputs'],['raster','Inspect the raster approximation']]},
  {id:'events',name:'8 · Corner events',variants:[['sweep','Candidate event versus changed wall']]}
 ];
-const DEFAULT={scene:'shadows',variant:'construct',phase:0,duration:12,panel:true,map:0,q2:[43,32],qxy:[9,35],eye:8,light:[9,16,10],yaw:-.65,pitch:.78,wire:true,airWire:false,cuts:true,history:true,labels:true,inset:true,opening:0,locator:'index',ceiling:1,face:-1,order:'near',dimension:'2d',metric:'area',rays:48,sampleBudget:4096,cubeN:26,sampler:'surface',compare:'overlay',hidden:false,shadowEnvelope:false,sampleWire:false,viewFocus:true,showRays:true,rayDrawLimit:128,candidates:false,density:'regular',rasterN:48,exportMode:'graphics'};
+const DEFAULT={scene:'shadows',variant:'construct',phase:0,duration:12,panel:true,map:0,q2:[43,32],qxy:[9,35],eye:8,light:[9,16,10],yaw:-.65,pitch:.78,wire:true,airWire:false,cuts:true,history:true,labels:true,inset:true,construction:true,opening:0,locator:'index',ceiling:1,face:-1,order:'near',dimension:'2d',metric:'area',rays:48,sampleBudget:4096,cubeN:26,sampler:'surface',compare:'overlay',hidden:false,shadowEnvelope:false,sampleWire:false,viewFocus:true,showRays:true,rayDrawLimit:128,candidates:false,density:'regular',rasterN:48,exportMode:'graphics'};
 let state=structuredClone(DEFAULT),playing=false,lastTick=0,playStart=0,phaseStart=0,hitTargets=[],stepCount=1,exporting=false,panelData={},benchResult=null,benchmarkBusy=false;
 const savedTabs=new Map(),cache=new Map();
 function memo(key,fn){if(cache.has(key))return cache.get(key);const v=fn();cache.set(key,v);if(cache.size>14)cache.delete(cache.keys().next().value);return v;}
@@ -35,17 +35,71 @@ function insetTerrain(s,d,surfaces=[],active=null){if(!s.inset)return;const g=G(
 function clipDisplay(poly,z=30){return clipByPlanes(poly,[{n:[1,0,0],d:0},{n:[-1,0,0],d:-100},{n:[0,1,0],d:0},{n:[0,-1,0],d:-70},{n:[0,0,1],d:0},{n:[0,0,-1],d:-z}]);}
 function shadowSides(tri,q,grow=1,roof=30,color=C.orange){const far=tri.map(v=>add(v,mul(sub(v,q),grow*12)));return tri.map((a,i)=>{const j=(i+1)%tri.length;return {poly:clipDisplay([a,tri[j],far[j],far[i]],roof),color,alpha:.15,shade:false};}).filter(f=>f.poly.length>2);}
 function urbanData(q){return memo('urban'+keyq(q),()=>{const v=visibility3(q,URBAN3.receivers,URBAN3.objects);return {q,...v};});}
-function drawShadows(s){const q=s.variant==='move'?[8+74*s.phase,16,s.light[2]]:s.light,g=G(s),cam=cameraMain(s,g,[50,35,12]);if(URBAN3.boxes.some(b=>q[0]>b[0]&&q[0]<b[0]+b[2]&&q[1]>b[1]&&q[1]<b[1]+b[3]&&q[2]<b[4])){setPanel({title:'The source is inside a solid',body:['Move it outside the building or raise its elevation.'],legend:[]});return;}
- const d=urbanData(q),part=s.variant==='construct'?Math.min(3,Math.floor(s.phase*4)):3,grow=s.variant==='construct'?clamp(s.phase*4-2,0,1):1,roof=Math.max(26,q[2]+1),faces=[],lines=[];stepCount=4;
- const ground=boxSurface().filter(f=>f.face===0);faces.push(...ground.map(f=>({poly:f.poly,color:part===3?'#9faeb5':'#f0f4f5'})));
- URBAN3.boxes.forEach(b=>{const v=boxVertices(b);BOX_FACES.forEach(f=>{const poly=f.map(i=>v[i]),front=dot(normal3(poly),sub(q,poly[0]))>0;faces.push({poly,color:part===0?(front?'#a5d1c7':'#b7c3cb'):part===3?'#9baeb9':C.wall});if(s.wire)lines.push(...edges3(poly,C.wallLine));});});
- if(part===3){d.surfaces.filter(f=>f.kind==='building'||f.kind==='bound'&&Math.abs(centroid(f.poly)[2])<1e-6).forEach(f=>{faces.push({poly:f.poly,color:C.tealLight,bias:.00015});if(s.cuts)lines.push(...segLines(cutEdges(f.poly,URBAN3.receivers[f.owner].poly),C.teal,2.5));});}
- if((part===2||part===3)&&s.variant!=='surface'&&s.variant!=='isovist'){for(const b of URBAN3.boxes)for(const [a,z] of silhouette(b,q)){const p=clipDisplay([a,z,add(z,mul(sub(z,q),12*grow)),add(a,mul(sub(a,q),12*grow))],roof);if(p.length>2){faces.push({poly:p,color:C.orange,alpha:.12,shade:false});lines.push(...edges3(p,C.orange,.6));}}}
- if(s.variant==='isovist'){if(!d.curtains)d.curtains=visibilityCurtains(d.surfaces,q);faces.push(...d.curtains.map(poly=>({poly,color:C.teal,alpha:.2,shade:false})));d.surfaces.filter(f=>f.kind==='bound'&&centroid(f.poly)[2]>1).forEach(f=>faces.push({poly:f.poly,color:C.green,alpha:.08}));}
- drawWorld(cam,faces,lines);if(part>=1&&s.variant!=='surface')for(const b of URBAN3.boxes)for(const [a,z] of silhouette(b,q))line2(cam.p(a),cam.p(z),C.orange,4);observer3(q,cam,0,s.labels);register(q,cam,'light');
- if(s.inset){const rect={x:g.x+g.w-250,y:669,w:230,h:180},m=mapFit(rect,[[0,0],[100,0],[100,70],[0,70]]);ctx.fillStyle='#fff';ctx.fillRect(rect.x-8,rect.y-30,rect.w+16,rect.h+38);text2('Plan · ground shadows',rect.x,rect.y-9,17,C.muted);poly2([[0,0],[100,0],[100,70],[0,70]].map(m.p),'#9faeb5',C.wallLine,1.5);d.surfaces.filter(f=>f.kind==='bound'&&Math.abs(centroid(f.poly)[2])<1e-6).forEach(f=>poly2(f.poly.map(m.p),C.tealLight));URBAN3.boxes.forEach(b=>poly2(boxVertices(b).slice(0,4).map(m.p),C.wall,C.wallLine,1.5));observer2(q,m,false);hitTargets.push({kind:'lightPlan',m,rect,point:m.p(q)});}
+// Merge query fragments on each complete planar receiver before drawing cuts.
+// Subtraction seams and the input diagonal are not physical shadow boundaries.
+function urbanReceiverCuts(d){
+ if(d.receiverCuts)return d.receiverCuts;
+ const groups=new Map();
+ for(const f of d.surfaces){
+  const r=URBAN3.receivers[f.owner];
+  if(r.kind!=='building'&&!(r.kind==='bound'&&r.face===0))continue;
+  const key=r.kind==='building'?`building:${r.bi}:${r.fi}`:'ground';
+  if(!groups.has(key)){
+   const whole=r.kind==='building'?BOX_FACES[r.fi].map(i=>boxVertices(URBAN3.boxes[r.bi])[i]):[[0,0,0],[100,0,0],[100,70,0],[0,70,0]];
+   groups.set(key,{whole,polys:[]});
+  }
+  groups.get(key).polys.push(f.poly);
+ }
+ return d.receiverCuts=[...groups.values()].flatMap(f=>receiverCutEdges(f.polys,f.whole));
+}
+function shadowScene(s){
+ const q=s.light,d=urbanData(q),part=s.construction?Math.min(3,Math.floor(s.phase*4)):3;
+ const grow=clamp(s.phase*4-2,0,1),roof=Math.max(26,q[2]+1),faces=[],lines=[];
+ faces.push(...boxSurface().filter(f=>f.face===0).map(f=>({poly:f.poly,color:part===3?'#9faeb5':'#f0f4f5'})));
+ URBAN3.boxes.forEach(b=>{const v=boxVertices(b);BOX_FACES.forEach(f=>{
+  const poly=f.map(i=>v[i]),front=dot(normal3(poly),sub(q,poly[0]))>0;
+  faces.push({poly,color:part===0?(front?'#a5d1c7':'#b7c3cb'):part===3?'#9baeb9':C.wall});
+  // Vertical faces project to edges in plan; their classification stays visible.
+  if(part===0)lines.push(...segLines(poly.map((a,i)=>[a,poly[(i+1)%poly.length]]),front?'#4d9e8b':'#8193a0',1.5));
+  else if(s.wire)lines.push(...edges3(poly,C.wallLine));
+ });});
+ if(part===3){
+  d.surfaces.filter(f=>f.kind==='building'||f.kind==='bound'&&Math.abs(centroid(f.poly)[2])<1e-6).forEach(f=>faces.push({poly:f.poly,color:C.tealLight,bias:.00015}));
+  if(s.construction)lines.push(...segLines(urbanReceiverCuts(d),C.teal,2.5));
+ }
+ if(s.construction&&part>=2){
+  for(const b of URBAN3.boxes)for(const [a,z] of silhouette(b,q)){
+   const p=clipDisplay([a,z,add(z,mul(sub(z,q),12*grow)),add(a,mul(sub(a,q),12*grow))],roof);
+   if(p.length>2){faces.push({poly:p,color:C.orange,alpha:.12,shade:false});lines.push(...edges3(p,C.orange,.6));}
+  }
+ }
+ if(s.construction&&part>=1)for(const b of URBAN3.boxes)lines.push(...segLines(silhouette(b,q),C.orange,4));
+ return {q,d,part,faces,lines};
+}
+function drawShadowView(cam,scene,name){
+ ctx.raw(`<g data-shadow-view="${name}" data-stage="${scene.part}" data-face-count="${scene.faces.length}" data-edge-count="${scene.lines.length}">`);
+ drawWorld(cam,scene.faces,scene.lines);ctx.raw('</g>');
+}
+function drawShadows(s){
+ const q=s.light,g=G(s),cam=cameraMain(s,g,[50,35,12]);
+ if(URBAN3.boxes.some(b=>q[0]>b[0]&&q[0]<b[0]+b[2]&&q[1]>b[1]&&q[1]<b[1]+b[3]&&q[2]<b[4])){setPanel({title:'The source is inside a solid',body:['Move it outside the building or raise its elevation.'],legend:[]});return;}
+ const scene=shadowScene(s),{d,part}=scene;stepCount=4;
+ drawShadowView(cam,scene,'main');observer3(q,cam,0,s.labels);register(q,cam,'light');
+ if(s.inset){
+  const rect={x:g.x+g.w-290,y:653,w:270,h:196},m=mapFit(rect,[[0,0],[100,0],[100,70],[0,70]]);
+  ctx.fillStyle='#fff';ctx.fillRect(rect.x-8,rect.y-30,rect.w+16,rect.h+38);text2('Plan',rect.x,rect.y-9,17,C.muted);
+  const top=camera3(rect,0,Math.PI/2,[50,35,12],Math.min(rect.w/100,rect.h/70));
+  // Reuse all stage geometry, with proper top-view occlusion. Vertical faces
+  // and silhouette edges collapse to projected edges rather than a second model.
+  drawShadowView(top,scene,'plan');observer2(q,m,false);
+  hitTargets.push({kind:'lightPlan',m,rect,point:m.p(q)});
+ }
  const titles=['Which faces face the source?','Find the silhouette edges','Extend edges away from the source','Paint every receiving surface'];
- setPanel({title:s.variant==='isovist'?'Optional: bounded visible air':titles[part],steps:['Classify faces','Extrude the silhouette','Clip ground, roofs, and walls'],active:part===0?0:part===1||part===2?1:2,body:[['The normal of each face decides whether it points toward the purple source.','An edge between opposite-facing faces belongs to the silhouette.','Orange quadrilaterals form the shadow sides. The source stays fixed.','Teal fragments remain directly visible. Dark pieces include shadows cast onto other buildings.'][part]],stats:[['Source elevation',number(q[2],1)+' m'],['Clipped receiver pieces',String(d.surfaces.length)]],legend:[[C.purple,'Source / observer'],[C.orange,'Silhouette and shadow sides'],[C.tealLight,'Visible receiver fragments'],['#9baeb9','Occluded surface']],note:s.variant==='isovist'?'This optional shell has a finite analysis boundary. It is not used in the surface-area comparison.':'Drag the purple point. The “Inter-building shadow” preset makes a cut on the rear building easy to inspect.'});
+ setPanel({title:s.construction?titles[part]:'Visible and shadowed surfaces',steps:s.construction?['Classify faces','Extrude the silhouette','Clip ground, roofs, and walls']:null,active:part===0?0:part===1||part===2?1:2,
+ body:[s.construction?['The normal of each face decides whether it points toward the purple source.','An edge between opposite-facing faces belongs to the silhouette.','Orange quadrilaterals extend the silhouette away from the source, forming the shadow sides.','Teal surfaces remain directly visible. Dark surfaces include shadows cast onto other buildings. The teal cuts mark actual visibility boundaries.'][part]:'Teal surfaces have an unobstructed connection to the source. Dark surfaces are in shadow. Move the source to update the ground, roofs, and walls.'],
+ stats:[['Source elevation',number(q[2],1)+' m'],['Clipped receiver pieces',String(d.surfaces.length)]],
+ legend:[[C.purple,'Source / observer'],...(s.construction?[[C.orange,'Silhouette and shadow sides']]:[]),[C.tealLight,'Visible surface'],['#9baeb9','Occluded surface']],
+ note:'Drag the purple source in either view. The plan uses the same geometry and construction stage, seen from directly above.'});
 }
 function subtract2(q,scene){const edges=sceneEdges(scene).filter(e=>e.ring),snapshots=[[scene.outer]],all=[];let parts=[scene.outer];for(const e of edges){const mid=mul(add(e.a,e.b),.5),va=sub(e.a,q),vb=sub(e.b,q),ab=sub(e.b,e.a);let n=unit([-ab[1],ab[0]]);if(dot(n,sub(q,e.a))>0)n=mul(n,-1);const planes=[{n,d:dot(n,e.a)}];for(const v of [va,vb]){let nn=unit([-v[1],v[0]]);if(dot(nn,sub(mid,q))<0)nn=mul(nn,-1);planes.push({n:nn,d:dot(nn,q)});}const out=[];for(const p of parts){let over=clipPlanes2(p,planes);if(over.length<3||area(over)<1e-8){out.push(p);continue;}let rest=p;for(const h of planes){const f=v=>dot(h.n,v)-h.d,off=clip(rest,f,false);if(off.length>=3&&area(off)>1e-8)out.push(off);rest=clip(rest,f);}}parts=out;snapshots.push(parts);all.push(e);}return {snapshots,edges:all,parts};}
 function chooseOpening(e){let best=-1,score=-1;for(let i=0;i<e.visits.length;i++){const v=e.visits[i];if(!v.portal)continue;const ratio=norm(sub(...v.opening))/norm(sub(...v.portal)),lost=1-ratio;if(ratio>.08&&ratio<.95){const a=area(v.poly),s=a*(1-Math.abs(lost-.5));if(s>score){score=s;best=i;}}}return best>=0?best:Math.min(1,e.visits.length-1);}
