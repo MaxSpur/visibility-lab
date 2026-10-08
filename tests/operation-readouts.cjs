@@ -8,7 +8,7 @@ const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html',sc
   await page.goto(url+'#subtraction');await page.waitForFunction(()=>window.visibilityLab?.version===4);
   assert.deepEqual(await page.locator('#nav button').allTextContents(),['1 · Shadow construction','2 · Subtract wall shadows','3 · Expanding triangles','4 · Terrain: beams','5 · Terrain: shadow cuts','6 · Terrain in the view','7 · Geometry and samples','8 · Effort and raster','9 · Corner events']);
   const cases=await page.evaluate(()=>MODES.flatMap(m=>m.variants.map(([variant])=>({scene:m.id,variant}))));
-  for(const settings of cases.concat(['surface','angular','raster'].map(sampler=>({scene:'metrics',variant:'still',dimension:'3d',sampler})),[{scene:'cost',variant:'bench',dimension:'3d'},{scene:'cost',variant:'raster',dimension:'3d'}])){
+  for(const settings of cases.concat(['raycast','raster'].map(variant=>({scene:'metrics',variant,dimension:'3d'})),[{scene:'cost',variant:'bench',dimension:'3d'},{scene:'cost',variant:'raster',dimension:'3d'}])){
    const data=await page.evaluate(settings=>{visibilityLab.renderAt(settings.scene,.55,{density:'coarse',sampleBudget:140,cubeN:4,rays:16,rasterN:8,...settings});const s=visibilityLab.snapshot();return {error:s.error,work:s.panel.work,stats:s.panel.stats};},settings);
    assert.equal(data.error,null,JSON.stringify(settings));assert.ok(data.work.entries.length>=1,JSON.stringify(settings));
    for(const entry of data.work.entries){assert.ok(Number.isInteger(entry.work.geometricTests)&&entry.work.geometricTests>=0,JSON.stringify({settings,entry}));assert.ok(Number.isInteger(entry.work.polygonClips)&&entry.work.polygonClips>=0);}

@@ -13,7 +13,8 @@ function urbanSubtractionScene(s){
  if(entry&&part<3){
   const poly=URBAN3.objects[index].poly;
   faces.push({poly,color:C.orange,bias:.0003});lines.push(...segLines(poly.map((a,i)=>[a,poly[(i+1)%poly.length]]),C.orange,3));
-  if(part>=1&&entry.planes){for(const p of poly)lines.push({a:q,b:p,color:C.orange,alpha:.45,width:1.5});for(const side of shadowSides(poly,q,1,Math.max(26,q[2]+1))){faces.push(side);lines.push(...edges3(side.poly,C.orange,.65));}}
+  for(const p of poly)lines.push({a:q,b:p,color:C.orange,alpha:.75,width:1.8,occlude:false,role:'source-ray'});
+  if(part>=1&&entry.planes){for(const side of shadowSides(poly,q,1,Math.max(26,q[2]+1))){faces.push(side);lines.push(...edges3(side.poly,C.orange,.65).map(l=>({...l,occlude:false,role:'shadow-extension'})));}}
   if(part===2){for(const f of entry.removed.filter(urbanPhysicalSurface)){faces.push({poly:f.poly,color:C.orangeLight,bias:.00035});}lines.push(...segLines(urbanReceiverCuts({surfaces:entry.removed}),C.orange,3));}
  }
  const work=!entry?finishSolverWork(emptySolverWork()):part<2?entry.preparedWork:part===2?entry.overlapWork:entry.work;

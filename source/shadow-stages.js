@@ -32,3 +32,24 @@ function recordedSubtraction3(q,receivers,occluders,{broadPhase=true}={}){
  });
  return {...measured.value,work:measured.work};
 }
+/* One selected facet against every receiver, retaining the teaching solver's
+ * independent blocked-patch recovery after subtraction. Every checkpoint is
+ * sampled during execution; the extra recovery clips remain explicitly charged. */
+function recordedSingleShadow3(q,tris,id){
+ const measured=measureSolverWork(checkpoint=>{
+  const planes=shadowPlanes(tris[id],q),preparedWork=checkpoint(),entries=[],remain=[],blocked=[];
+  for(let owner=0;owner<tris.length;owner++){
+   const poly=tris[owner];let possible=!!planes&&poly.length>=3;
+   if(possible&&Math.max(...poly.map(p=>val3(planes[0],p)))<=E3)possible=false;
+   if(possible&&planes.some(h=>Math.max(...poly.map(p=>val3(h,p)))<=E3))possible=false;
+   const classifiedWork=checkpoint();let overlap=possible?clipByPlanes(poly,planes):[];
+   if(overlap.length<3||area3(overlap)<E3)overlap=[];
+   const overlapWork=checkpoint();let polys=[poly];
+   if(overlap.length){let rest=poly;polys=[];for(const h of planes){const outside=clip3(rest,h,false);if(outside.length>=3&&area3(outside)>E3)polys.push(outside);rest=clip3(rest,h,true);if(rest.length<3)break;}}
+   const outputs=polys.map(poly=>({poly,owner,kind:'terrain'}));remain.push(...outputs);let removed=[];
+   if(planes&&Math.max(...poly.map(p=>val3(planes[0],p)))>E3){const over=clipByPlanes(poly,planes);if(over.length>2){removed=[{poly:over,owner,kind:'terrain'}];blocked.push(...removed);}}
+   entries.push({owner,poly,possible,overlap,removed,after:outputs,classifiedWork,overlapWork,work:checkpoint()});
+  }
+  return {id,planes,preparedWork,entries,remain,blocked,area:blocked.reduce((n,f)=>n+area3(f.poly),0)};
+ });return {...measured.value,work:measured.work};
+}

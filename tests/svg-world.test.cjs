@@ -13,6 +13,9 @@ let svg=worldSVG(cam,[face(x=>x),face(x=>10-x,'#0000ff')]);assert(Math.abs(drawn
 for(let i=0;i<100;i++){const p=[.13+i%10,.17+Math.floor(i/10)],expected=p[0]>5?0:1,got=polygons(svg).filter(f=>inside(p,f.poly));assert.equal(got.length,1);assert.equal(got[0].index,expected);}
 svg=worldSVG(cam,[face(()=>1),face(()=>1,'#0000ff')]);assert.equal(drawnArea(svg,0),0);assert.equal(drawnArea(svg,1),100);
 const blocker={poly:[[3,0,2],[7,0,2],[7,10,2],[3,10,2]],color:'#0000ff',shade:false};svg=worldSVG(cam,[blocker],[{a:[0,5,0],b:[10,5,0],width:3}]);assert.deepEqual(lineSegments(svg),[[0,5,3,5],[7,5,10,5]]);assert(svg.includes('stroke-width="3"'));
+// A teaching guide remains continuous across opaque context while ordinary
+// geometry still receives the same analytical depth clipping above.
+svg=worldSVG(cam,[blocker],[{a:[0,5,0],b:[10,5,0],occlude:false,role:'source-ray',candidate:7}]);assert.deepEqual(lineSegments(svg),[[0,5,10,5]]);assert(svg.includes('data-inspection-guide="true"'));assert(svg.includes('data-line-role="source-ray"'));assert(svg.includes('data-tested-occluder="7"'));
 // A sloping line pierces a depth plane halfway across the footprint.
 svg=worldSVG(cam,[face(()=>5)],[{a:[0,5,0],b:[10,5,10]}]);const piercing=lineSegments(svg);assert.equal(piercing.length,1);assert(Math.abs(piercing[0][0]-4.934)<1e-5);assert.equal(piercing[0][2],10);
 svg=worldSVG(cam,[blocker],[{a:[0,5,2],b:[10,5,2]}]);assert.equal(lineSegments(svg).length,1,'Coplanar mesh line should be visible with display bias');

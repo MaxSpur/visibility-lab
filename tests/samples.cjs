@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html';
+(async()=>{const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1920,height:1080}}),errors=[];page.on('pageerror',e=>errors.push(e.message));try{
+ await page.goto(url+'#metrics');await page.waitForFunction(()=>window.visibilityLab?.version===4);
+ for(const method of ['raycast','raster'])for(const phase of [0,.5,1]){
+  await page.evaluate(({method,phase})=>visibilityLab.renderAt('metrics',phase,{dimension:'2d',variant:method,map:1}),{method,phase});
+  const a=await page.evaluate(()=>{const g=document.querySelector('[data-sample-comparison]'),d=sampleComparisonData2(state);return {error:visibilityLab.snapshot().error,method:g.dataset.method,count:+g.dataset.sampleCount,drawn:+g.dataset.drawnCount,cells:g.querySelectorAll('[data-grid-cell]').length,expected:d.raster?d.n*d.sample.ny:d.n,stats:d.sample.stats,work:panelData.work,html:document.querySelector('#view').innerHTML};});assert.equal(a.error,null);assert.equal(a.method,method);assert.equal(a.count,a.expected);assert.equal(a.drawn,a.count);if(method==='raster'){assert.equal(a.cells,a.count);assert.ok(a.stats.cellVisits>=a.stats.queries);assert.equal(a.work.entries[1].work.geometricTests,0);}assert.ok(!/\b(?:NaN|Infinity)\b/.test(a.html));
+ }
+ await page.evaluate(()=>visibilityLab.renderAt('metrics',.1,{variant:'raycast',showRays:false,rayDrawLimit:16}));
+ assert.deepEqual(await page.locator('select[data-key=variant] option').allTextContents(),['Raycast','Raster']);assert.equal(await page.getByLabel('Method',{exact:true}).count(),1);
+ for(const key of ['rays','sampleBudget','cubeN','sampler','showRays','rayDrawLimit'])assert.equal(await page.locator(`[data-key=${key}]`).count(),0,'removed sampling budget/cap: '+key);
+ const count=await page.locator('[data-sample-comparison]').getAttribute('data-sample-count');await page.locator('#next').click();assert.equal(+await page.locator('[data-sample-comparison]').getAttribute('data-sample-count'),+count+1);await page.locator('#prev').click();assert.equal(await page.locator('[data-sample-comparison]').getAttribute('data-sample-count'),count);
+ await page.locator('#phase').fill('1');assert.equal(await page.locator('[data-sample-ray]').count(),1024);await page.getByLabel('Method',{exact:true}).selectOption('raster');assert.equal(await page.evaluate(()=>visibilityLab.getState().phase),1);assert.equal(+await page.locator('[data-sample-comparison]').getAttribute('data-sample-count'),128*Math.round(128*.65));assert.equal(await page.locator('#next').isEnabled(),false);
+ console.log('✓ 2D resolution slider draws every ray or real binary occupancy cell and reports grid work separately.');
+ for(const method of ['raycast','raster'])for(const phase of [0,.25,1]){
+  await page.evaluate(({method,phase})=>visibilityLab.renderAt('metrics',phase,{dimension:'3d',variant:method,density:'coarse'}),{method,phase});
+  const a=await page.evaluate(()=>{const g=document.querySelector('[data-sample-comparison]'),d=sampleComparisonData3(state);return {error:visibilityLab.snapshot().error,count:+g.dataset.sampleCount,drawn:+g.dataset.drawnCount,N:+g.dataset.gridSide,misses:+g.dataset.misses,pixels:g.querySelectorAll('[data-sample-pixel]').length,rayTests:d.raw.work.rayPrimitiveTests,html:document.querySelector('#view').innerHTML};});assert.equal(a.error,null);assert.equal(a.N,Math.round(2+30*phase));assert.equal(a.count,6*a.N*a.N);assert.equal(a.drawn,a.count);assert.ok(a.misses>0);if(method==='raster'){assert.equal(a.pixels,a.count);assert.equal(a.rayTests,0);assert.equal(await page.locator('[data-sample-ray]').count(),0,'depth raster shows pixels rather than pretend query rays');}else{assert.ok(a.rayTests>0);assert.equal(await page.locator('[data-sample-ray]').count(),a.count,'every input ray has one complete native inspection line');}assert.ok(!/\b(?:NaN|Infinity)\b/.test(a.html));
+ }
+ for(const method of ['raycast','raster'])for(const compare of ['overlay','side'])await page.evaluate(({method,compare})=>visibilityLab.renderAt('metrics',.15,{dimension:'3d',variant:method,density:'coarse',hidden:true,shadowEnvelope:true,sampleWire:true,compare}),{method,compare});
+ console.log('✓ Matched six-face grids, all directions including misses, all raster pixels, and surface display toggles.');
+ assert.deepEqual(errors,[]);
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

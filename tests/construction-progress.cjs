@@ -1,0 +1,28 @@
+/* Weighted receiver phases, continuous source guides and rejected candidates. */
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const scratch=path.resolve(__dirname,'../.codex-scratch.nosync');fs.mkdirSync(scratch,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:3840,height:2160},acceptDownloads:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ try{
+  await page.goto(process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html#terrain');await page.waitForFunction(()=>window.visibilityLab);
+  const phases=[0,.06,.11,.22,.34,.35,.45,.6,.8,.85,1],work=[];
+  for(const phase of phases){
+   const a=await page.evaluate(phase=>{visibilityLab.renderAt('terrain',phase,{variant:'one',face:64,qxy:[9,35]});const scene=terrainSingleShadowScene(state),node=document.querySelector('[data-terrain-single-sequence]'),main=document.querySelector('[data-terrain-view=main]'),plan=document.querySelector('[data-terrain-view=plan]'),rays=which=>[...which.querySelectorAll('[data-line-role=source-ray]')].map(l=>[+l.getAttribute('x1'),+l.getAttribute('y1')]),g=G(state),cam=cameraMain(state,g),topRect={x:g.x+g.w-280,y:640,w:260,h:208},top=camera3(topRect,0,Math.PI/2,[50,35,12],Math.min(topRect.w/100,topRect.h/70));return {error:visibilityLab.snapshot().error,kind:node.dataset.kind,work:panelData.work.entries[0].work,original:singleShadow(terrainState(state),64).work,processed:scene.processed,rays:[rays(main),rays(plan)],q:[cam.p(scene.d.q),top.p(scene.d.q)],same:main.dataset.faceCount===plan.dataset.faceCount&&main.dataset.edgeCount===plan.dataset.edgeCount,highlight:scene.lines.filter(l=>l.candidate).length,receiver:scene.step.entry?.owner};},phase);
+   assert.equal(a.error,null);assert.ok(a.same);work.push(a.work);
+   if(phase<.85){for(let i=0;i<2;i++){assert.equal(a.rays[i].length,3);for(const start of a.rays[i])assert.ok(Math.hypot(start[0]-a.q[i][0],start[1]-a.q[i][1])<1e-5,'guide begins exactly at projected observer');}}
+   if(a.receiver!==undefined)assert.ok(a.highlight>=3,'tested receiver stays highlighted');
+   if(phase>=.85){assert.equal(a.kind,'complete');assert.deepEqual(a.work,a.original);assert.equal(a.rays[0].length,0);}
+  }
+  for(let i=1;i<work.length;i++)for(const key of ['geometricTests','polygonClips','segmentClips'])assert.ok(work[i][key]>=work[i-1][key]);assert.ok(new Set(work.map(w=>w.geometricTests)).size>5);assert.deepEqual(work[2],work[4],'extension is display-only and does not invent solver work');
+  await page.evaluate(()=>visibilityLab.renderAt('terrain',0,{variant:'one',face:64}));for(const kind of ['prepare','extend','classify','overlap','retain']){await page.locator('#next').click();assert.equal(await page.locator('[data-terrain-single-sequence]').getAttribute('data-kind'),kind);}await page.locator('#prev').click();assert.equal(await page.locator('[data-terrain-single-sequence]').getAttribute('data-kind'),'overlap');
+  const overlapPhase=await page.evaluate(()=>{const scene=terrainSingleShadowScene(state),step=scene.timeline.find(e=>e.kind==='overlap'&&e.entry?.overlap.length);return step.start+(step.end-step.start)/2;});await page.locator('#phase').fill(String(Number(overlapPhase.toFixed(6))));await page.screenshot({path:path.join(scratch,'terrain-shadow-receiver-4k.png')});
+  for(const [scene,variant,phase] of [['shadows','construct',.62],['shadows','subtract',.055],['terrain','all',.015]]){
+   const a=await page.evaluate(({scene,variant,phase})=>{visibilityLab.renderAt(scene,phase,{variant,density:'coarse'});return {error:visibilityLab.snapshot().error,rays:document.querySelectorAll('[data-line-role=source-ray]').length};},{scene,variant,phase});assert.equal(a.error,null);assert.equal(a.rays,variant==='construct'?0:6,'continuous source rays shared with plan, excluding silhouette analogy');
+  }
+  const setup=await page.evaluate(()=>{visibilityLab.renderAt('projection',0,{variant:'project',face:50});const g=G(state),w=projectionWorkflow(state,terrainState(state),{w:g.w*.4,h:405}),k=w.timeline.findIndex(t=>t.kind==='reject'&&t.count>1);return {phase:(k+.01)/w.timeline.length};});
+  const rejected=await page.evaluate(phase=>{visibilityLab.renderAt('projection',phase,{variant:'project',face:50});const g=G(state),w=projectionWorkflow(state,terrainState(state),{w:g.w*.4,h:405}),scene=projectionScene(state,terrainState(state),w);return {ids:scene.testedIds,main:[...new Set([...document.querySelectorAll('[data-terrain-view=main] [data-tested-occluder]')].map(e=>+e.dataset.testedOccluder))],detail:document.querySelector('[data-terrain-view=detail] [data-tested-candidates]').dataset.testedCandidates,processed:panelData.progress.processed,lastIndex:scene.step.entry.index};},setup.phase);assert.deepEqual(rejected.main.sort((a,b)=>a-b),[...rejected.ids].sort((a,b)=>a-b));assert.equal(rejected.detail,rejected.ids.join(','));assert.equal(rejected.processed,rejected.lastIndex+1);await page.screenshot({path:path.join(scratch,'projection-tested-candidates-4k.png')});
+  const pending=page.waitForEvent('download');await page.locator('#svg').click();const file=path.join(scratch,'projection-tested-candidates.svg');await(await pending).saveAs(file);assert.ok(fs.readFileSync(file,'utf8').includes('data-tested-occluder'));assert.deepEqual(errors,[]);
+  console.log('PASS: weighted shadow phases, genuine receiver counts, exact stepping, continuous source-to-facet rays, synchronized plan, rejected-candidate highlights and native SVG export.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});
