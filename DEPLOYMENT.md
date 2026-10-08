@@ -9,15 +9,16 @@ earlier versions are excluded from the published artifact.
 
 Use the public repository `MaxSpur/visibility-lab`. Leave its custom-domain
 field empty: the account site `MaxSpur/maxspur.github.io` already uses
-`www.maximspur.com`, which project sites inherit. The canonical lab URL will be
-<https://www.maximspur.com/visibility-lab/>.
+`www.maximspur.com`, which project sites inherit. The project deployment retains
+<https://www.maximspur.com/visibility-lab/> for existing bookmarks.
 
-The address <https://maximspur.com/visibility-lab> additionally depends on the
-existing apex-domain routing. If it does not forward correctly, add a scoped
-Cloudflare redirect for `/visibility-lab` and `/visibility-lab/*` to the same
-path on `https://www.maximspur.com`, retaining query parameters. DNS records
-cannot route individual paths. Do not change the account site's domain or the
-existing routing for other projects.
+The public single-file route is
+<https://www.maximspur.com/visibility-lab.html>. This root-level file belongs in
+the account repository `MaxSpur/maxspur.github.io`, rather than in the project
+Pages artifact. Follow the account-copy process below as part of a release.
+The requested address <https://maximspur.com/visibility-lab.html> additionally
+depends on Cloudflare's apex routing. DNS records cannot route individual paths;
+preserve existing routing for the homepage and other projects.
 
 Finish concurrent content/benchmark work before rebuilding or making a release.
 Run from this directory:
@@ -74,6 +75,21 @@ Inspect the deployment result and verify the live entry URL, a bookmarked
 demonstration, embedded logos, SVG display, and the benchmark worker before
 calling the release deployed. To roll back, revert the relevant release commit,
 push it, and manually rerun the workflow.
+
+## Account site copy
+
+The separate checkout `maxspur.github.io` publishes the root of `main` through
+its existing branch-based Pages build. Its `CNAME` remains `www.maximspur.com`.
+After building, validating and committing V4, copy the portable
+`visibility-lab-v4.html` into that checkout as `visibility-lab.html`. Record the
+source repository, exact source commit and copied SHA-256 in
+`visibility-lab.source.json`, as for the LASTIG copy. Verify any existing copy
+against its recorded checksum before replacing it; preserve manual edits for
+review. Commit and push those files from the account checkout, then wait for
+its Pages deployment and compare the live HTML with the built source bytes.
+
+The account copy is a separate release step. The project's workflow does not
+write to the account repository. Keep its homepage redirect and other files.
 
 ## LASTIG copy and deployment
 
