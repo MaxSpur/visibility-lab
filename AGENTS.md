@@ -1,6 +1,6 @@
 # Visibility Lab orientation
 
-This directory is its own Git repository. Stage only its files; parent seminar assets belong to other versions. The portable deliverable is `visibility-lab-v4.html`, built from `source/`; `index.html` preserves bookmarks for static-site hosting. Publishing remains a separate action; see [deployment instructions](DEPLOYMENT.md) for manual GitHub Pages releases and the read-only LASTIG hosting investigation.
+This directory is its own Git repository. Stage only its files; parent seminar assets belong to other versions. The portable deliverable is `visibility-lab-v4.html`, built from `source/`; `index.html` preserves bookmarks for static-site hosting. Publishing remains a separate action; see [deployment instructions](DEPLOYMENT.md) for manual GitHub Pages releases and the separate LASTIG copy and deployment process.
 
 Read [README](README.md) for usage, benchmark statistics and run/check commands. Current method equations, numerical limits and sources live in [reference notes](source/reference-notes.js) and [wall-shadow reference](source/wall-shadow-docs.js), rather than a parallel work log.
 

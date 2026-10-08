@@ -75,7 +75,7 @@ demonstration, embedded logos, SVG display, and the benchmark worker before
 calling the release deployed. To roll back, revert the relevant release commit,
 push it, and manually rerun the workflow.
 
-## LASTIG hosting: investigated, not changed
+## LASTIG copy and deployment
 
 The separate checkout `maxim-spur-lastig` belongs to
 [`umrlastig/maxim-spur`](https://github.com/umrlastig/maxim-spur/tree/gh-pages).
@@ -84,19 +84,23 @@ Its existing Pages site publishes the root of `gh-pages` and inherits
 redirects to <https://www.umr-lastig.fr/maxim-spur/>. No new server or DNS setup
 should be needed for a static child directory.
 
-When separately authorized, copy the validated public payload into
-`visibility-lab/` in that repository. Keep its existing homepage and Pages
-settings. The expected entry URL is
-<https://www.umr-lastig.fr/maxim-spur/visibility-lab/>. Add a bilingual
-**Intervisibility laboratory / Laboratoire d’intervisibilité** link with
-`href="visibility-lab/"` in the active Teaching section of the root `index.html`.
-The Projects and Software development sections are currently commented out;
-adding a link inside those comments would not make it visible. No personal
-`CNAME` should be added. Push to `gh-pages` would publish through its existing
-branch-based Pages build.
+The personal page links to `visibility-lab/` from its active Software development
+subsection. The child directory contains `index.html`, `visibility-lab-v4.html`,
+and `source.json`, which records the copied source commit and file checksums.
+Its entry URL is <https://www.umr-lastig.fr/maxim-spur/visibility-lab/>. Keep the
+personal homepage and Pages settings; no child-site `CNAME` is needed.
 
-This investigation made no changes to the LASTIG checkout or remote repository.
-Check its current branch and homepage structure again before any later update.
+Before a LASTIG release, build and validate V4, commit its source and built HTML,
+and copy those two public HTML files from that exact committed revision.
+Verify the existing copy against its recorded checksums before replacing it;
+preserve manual edits for review. Update `source.json` to identify the new
+revision and verify the copied bytes again. Check the personal page and lab
+link locally, then commit and push `gh-pages` from the LASTIG project. That
+push publishes through its existing branch-based Pages build.
+
+Copying is currently manual. Source commits and GitHub Pages deployments do not
+automatically update the LASTIG checkout or publish it. Check both repositories'
+working trees and the copied revision before each release.
 
 GitHub references: [custom-domain inheritance](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/about-custom-domains-and-github-pages),
 [Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages),
