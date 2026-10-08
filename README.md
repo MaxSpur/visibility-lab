@@ -10,7 +10,7 @@ Open `visibility-lab-v4.html` directly in a browser. The single HTML file works 
 python3 -m http.server 8764 --bind 127.0.0.1
 ```
 
-Then open [the lab](http://127.0.0.1:8764/). `index.html` forwards to the lab while preserving query parameters and the URL fragment. The repository can serve as a static GitHub Pages site; see [deployment instructions](DEPLOYMENT.md) for publishing and repository settings.
+Then open [the lab](http://127.0.0.1:8764/). The local `index.html` forwards to the built lab while preserving query parameters and the URL fragment. The published lab is at [maximspur.com/visibility-lab.html](https://maximspur.com/visibility-lab.html); old project URLs redirect there. See [deployment instructions](DEPLOYMENT.md) for publishing and repository settings.
 
 ## Use the demonstrations
 

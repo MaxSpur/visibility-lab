@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the portable lab and stage only its public files, without rebuilding it."""
+"""Validate the portable lab and stage redirects for its retired project URLs."""
 import argparse
 import hashlib
 import importlib.util
@@ -8,6 +8,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_FILES = ('index.html', 'visibility-lab-v4.html', '.nojekyll')
+REDIRECT_HTML = b'''<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Geometric Visibility Lab</title>
+<link rel="canonical" href="https://www.maximspur.com/visibility-lab.html">
+<script>location.replace('https://www.maximspur.com/visibility-lab.html'+location.search+location.hash);</script>
+<p><a href="https://www.maximspur.com/visibility-lab.html">Open Geometric Visibility Lab</a></p>
+</html>
+'''
 
 
 def prepare(destination):
@@ -34,6 +44,9 @@ def prepare(destination):
     if any((ROOT / name).read_bytes() != data for name, data in payload.items()):
         raise ValueError('Public files changed during validation; retry after content work finishes.')
 
+    # Keep the authoring HTML and localhost launcher intact. Project Pages now
+    # forwards both old entry points to the account site's single current copy.
+    payload = {name: REDIRECT_HTML for name in PUBLIC_FILES if name != '.nojekyll'}
     payload['.nojekyll'] = b''
     destination.mkdir(parents=True, exist_ok=True)
     for name, data in payload.items():

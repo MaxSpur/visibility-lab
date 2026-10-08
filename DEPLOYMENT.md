@@ -1,16 +1,20 @@
 # Deploy V4
 
-V4 is a standalone static site. Its public payload is `index.html`,
-`visibility-lab-v4.html`, and an empty `.nojekyll`. The launcher preserves query
-parameters and fragments. Source modules, tests, raw benchmark captures, and
-earlier versions are excluded from the published artifact.
+V4 is a standalone static site. The account and LASTIG sites publish the portable
+HTML as `visibility-lab.html`. The old project Pages artifact contains redirect
+pages named `index.html` and `visibility-lab-v4.html`, plus an empty `.nojekyll`.
+Both redirect to the account site's current copy, preserving query parameters
+and fragments. Source modules, tests, raw captures and earlier versions are not
+published.
 
 ## GitHub Pages
 
 Use the public repository `MaxSpur/visibility-lab`. Leave its custom-domain
 field empty: the account site `MaxSpur/maxspur.github.io` already uses
 `www.maximspur.com`, which project sites inherit. The project deployment retains
-<https://www.maximspur.com/visibility-lab/> for existing bookmarks.
+<https://www.maximspur.com/visibility-lab/> and its former
+`visibility-lab-v4.html` entry point as redirects for existing bookmarks. Never
+publish a second application copy under those old project URLs.
 
 The public single-file route is
 <https://www.maximspur.com/visibility-lab.html>. This root-level file belongs in
@@ -35,7 +39,7 @@ node tests/svg-world.test.cjs
 ```
 
 The preparation script validates the saved HTML against its sources and stages
-only the public files in ignored `.codex-scratch.nosync/pages/site/`. It does not
+only the redirect files in ignored `.codex-scratch.nosync/pages/site/`. It does not
 rebuild or modify the authoring files. A stale artifact or a changed input
 aborts packaging. Run the existing browser layout/interface gates described in
 [README](README.md#develop-and-check) on the final release too; the workflow's
