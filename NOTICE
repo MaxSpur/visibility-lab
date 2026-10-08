@@ -1,0 +1,15 @@
+Geometric Visibility Lab
+Copyright (c) 2026 Maxim Spur
+
+The original project code, documentation, synthetic scene and benchmark data,
+and QR artwork are licensed under the MIT License in LICENSE.
+
+Affiliation logos in assets/brand/ and their embedded copies in the portable
+HTML are excluded from that grant. They identify Geovis, LASTIG, IGN, Geodata
+Paris, and Universite Gustave Eiffel. Copyright and trademark rights remain
+with their respective owners; this project does not grant rights to reuse
+those logos or imply institutional endorsement. See assets/brand/README.md
+for attribution and asset sources.
+
+Scientific references linked in the application describe related methods.
+The lab does not bundle CGAL or GRASS implementations.

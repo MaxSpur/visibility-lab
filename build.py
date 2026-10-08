@@ -16,6 +16,8 @@ BENCHMARK_MODULES = ('geometry', 'operation-counts', 'wall-shadow2', 'sample-com
 
 def build():
     template = (ROOT / 'source/template.html').read_text()
+    notice = (ROOT / 'LICENSE').read_text().strip() + '\n\n' + (ROOT / 'NOTICE').read_text().strip()
+    template = template.replace('/*LICENSE_NOTICE*/', notice)
     for key, filename, mime in (
         ('GEOVIS', 'geovis.png', 'image/png'),
         ('LASTIG', 'lastig.svg', 'image/svg+xml'),

@@ -46,7 +46,7 @@ The preparation script validates the saved HTML against its sources and stages
 only the redirect files in ignored `.codex-scratch.nosync/pages/site/`. It does not
 rebuild or modify the authoring files. A stale artifact or a changed input
 aborts packaging. Run the existing browser layout/interface gates described in
-[README](README.md#develop-and-check) on the final release too; the workflow's
+[CONTRIBUTING](CONTRIBUTING.md#develop-and-check) on the final release too; the workflow's
 numerical checks do not establish visible UI correctness.
 
 For first-time remote setup, if the repository and remote do not yet exist:
