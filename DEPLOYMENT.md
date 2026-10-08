@@ -84,16 +84,18 @@ Its existing Pages site publishes the root of `gh-pages` and inherits
 redirects to <https://www.umr-lastig.fr/maxim-spur/>. No new server or DNS setup
 should be needed for a static child directory.
 
-The personal page links to `visibility-lab/` from its active Software development
-subsection. The child directory contains `index.html`, `visibility-lab-v4.html`,
-and `source.json`, which records the copied source commit and file checksums.
-Its entry URL is <https://www.umr-lastig.fr/maxim-spur/visibility-lab/>. Keep the
-personal homepage and Pages settings; no child-site `CNAME` is needed.
+The personal page links to `visibility-lab.html` from its active Software
+development subsection. The personal repository contains the built V4 HTML
+under that filename; `visibility-lab.source.json` records its source commit and
+checksum. Its URL is
+<https://www.umr-lastig.fr/maxim-spur/visibility-lab.html>. Keep the personal
+homepage and Pages settings; no additional `CNAME` is needed.
 
 Before a LASTIG release, build and validate V4, commit its source and built HTML,
-and copy those two public HTML files from that exact committed revision.
+and copy `visibility-lab-v4.html` from that exact committed revision into the
+personal repository as `visibility-lab.html`.
 Verify the existing copy against its recorded checksums before replacing it;
-preserve manual edits for review. Update `source.json` to identify the new
+preserve manual edits for review. Update `visibility-lab.source.json` to identify the new
 revision and verify the copied bytes again. Check the personal page and lab
 link locally, then commit and push `gh-pages` from the LASTIG project. That
 push publishes through its existing branch-based Pages build.
