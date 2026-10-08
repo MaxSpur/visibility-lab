@@ -20,7 +20,7 @@ fs.mkdirSync(scratch,{recursive:true});
       const stats=document.querySelector('#explanationFooter .stats'),title=document.querySelector('#explanationTitle'),mode=document.querySelector('[data-key=variant]'),legend=document.querySelector('#explanationFooter .legend');
       return {modeBottom:mode?.getBoundingClientRect().bottom??null,titleTop:title.getBoundingClientRect().top,titleFont:parseFloat(getComputedStyle(title).fontSize),rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),statsTop:stats.getBoundingClientRect().top,statsBottom:stats.getBoundingClientRect().bottom,legendTop:legend.getBoundingClientRect().top,error:visibilityLab.snapshot().error};
      });
-     assert.equal(p.error,null);if(scene==='shadows')assert.equal(p.modeBottom,null);else assert.ok(p.modeBottom<p.titleTop);assert.ok(p.titleFont>=p.rootFont*1.4);assert.ok(p.statsBottom<p.legendTop);positions.push(p.statsTop);
+     assert.equal(p.error,null);assert.ok(p.modeBottom<p.titleTop);assert.ok(p.titleFont>=p.rootFont*1.4);assert.ok(p.statsBottom<p.legendTop);positions.push(p.statsTop);
     }
     assert.ok(Math.max(...positions)-Math.min(...positions)<1,`${scene} stats move with the step: ${positions}`);
    }
@@ -57,8 +57,8 @@ fs.mkdirSync(scratch,{recursive:true});
 
   await page.evaluate(()=>visibilityLab.renderAt('shadows',.52,{panel:true,exportMode:'panel'}));
   const svg=await page.evaluate(()=>visibilityLab.exportSVG('panel'));
-  assert.ok(!svg.includes('Construct, then paint every receiver'));assert.ok(!svg.includes('Demonstration'));assert.ok(svg.includes('Source elevation'));assert.ok(!svg.includes('Optional: complementary visible air'));assert.ok(!/<(?:image|foreignObject)\b/.test(svg));
+  assert.ok(!svg.includes('Construct, then paint every receiver'));assert.ok(svg.includes('Construct the silhouette shadow'));assert.ok(svg.includes('Demonstration'));assert.ok(svg.includes('Source elevation'));assert.ok(!svg.includes('Optional: complementary visible air'));assert.ok(!/<(?:image|foreignObject)\b/.test(svg));
   await page.setViewportSize({width:3840,height:2160});await page.evaluate(()=>visibilityLab.renderAt('shadows',.52,{panel:true}));await page.screenshot({path:path.join(scratch,'shared-ui-4k.png')});
-  assert.deepEqual(errors,[]);console.log('✓ Vector panel export omits the removed shadow mode and includes anchored readouts.');
+  assert.deepEqual(errors,[]);console.log('✓ Vector panel export identifies the selected shadow mode and includes anchored readouts.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

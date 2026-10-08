@@ -1,10 +1,10 @@
 const MODES=[
- {id:'shadows',name:'1 · Shadow construction',variants:[['construct','Shadow construction']]},
+ {id:'shadows',name:'1 · Shadow construction',variants:[['construct','Construct the silhouette shadow'],['subtract','Subtract shadows, face by face']]},
  {id:'subtraction',name:'2 · Subtract wall shadows',variants:[['subtract','Subtract shadows, wall by wall'],['result','Inspect the complete visible region']]},
  {id:'expansion',name:'3 · Expanding triangles',variants:[['expand','Locate → expand the complete isovist'],['locate','Find the observer triangle'],['opening','Inspect one clipped opening']]},
  {id:'air',name:'4 · Terrain: beams',variants:[['branch','Follow one beam, face by face'],['expand','Accumulate all terrain beams'],['project','Explain the cut of a selected terrain face']]},
- {id:'terrain',name:'5 · Terrain: shadow cuts',variants:[['one','Only the highlighted face’s shadow'],['all','Subtract every terrain-face shadow']]},
- {id:'projection',name:'6 · Terrain in the view',variants:[['project','Explain the projected cut'],['result','Inspect the complete observer view']]},
+ {id:'terrain',name:'5 · Terrain: shadow cuts',variants:[['one','Only the highlighted face’s shadow'],['all','Subtract shadows, face by face']]},
+ {id:'projection',name:'6 · Terrain in the view',variants:[['project','Explain the projected cut'],['accumulate','Build the observer view, triangle by triangle']]},
  {id:'metrics',name:'7 · Geometry and samples',variants:[['still','Inspect / adjust sample count'],['rays','Increase count from minimum to selected limit'],['move','Move observer along a straight track']]},
  {id:'cost',name:'8 · Effort and raster',variants:[['bench','Benchmark matched outputs'],['raster','Inspect the raster approximation']]},
  {id:'events',name:'9 · Corner events',variants:[['sweep','Candidate event versus changed wall']]}
@@ -81,6 +81,7 @@ function drawShadowView(cam,scene,name){
  drawWorld(cam,scene.faces,scene.lines);ctx.raw('</g>');
 }
 function drawShadows(s){
+ if(s.variant==='subtract')return drawUrbanSubtraction(s);
  const q=s.light,g=G(s),cam=cameraMain(s,g,[50,35,12]);
  if(URBAN3.boxes.some(b=>q[0]>b[0]&&q[0]<b[0]+b[2]&&q[1]>b[1]&&q[1]<b[1]+b[3]&&q[2]<b[4])){setPanel({title:'The source is inside a solid',body:['Move it outside the building or raise its elevation.'],legend:[]});return;}
  const scene=shadowScene(s),{d,part}=scene;stepCount=4;

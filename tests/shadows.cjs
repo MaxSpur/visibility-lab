@@ -10,7 +10,8 @@ const scratch=path.resolve(__dirname,'../.codex-scratch.nosync');fs.mkdirSync(sc
   await page.goto(url+'#shadows');await page.waitForFunction(()=>window.visibilityLab?.version===4);
   for(const phase of [0,.35,.65,1]){
    await page.evaluate(phase=>visibilityLab.renderAt('shadows',phase),phase);
-   assert.equal(await page.locator('[data-key=variant]').count(),0);
+   assert.equal(await page.locator('[data-key=variant]').count(),1);
+   assert.equal(await page.locator('[data-key=variant] option').count(),2);
    assert.equal(await page.getByRole('button',{name:'Inter-building shadow',exact:true}).count(),0);
    const actual=await page.evaluate(()=>{
     const groups=[...document.querySelectorAll('[data-shadow-view]')],scene=shadowScene(state);
@@ -19,7 +20,7 @@ const scratch=path.resolve(__dirname,'../.codex-scratch.nosync');fs.mkdirSync(sc
    assert.equal(actual.error,null);assert.equal(actual.groups.length,2);
    for(const group of actual.groups){assert.equal(group.stage,actual.stage);assert.equal(group.faces,actual.faces);assert.equal(group.edges,actual.edges);assert.ok(group.renderedLines>0);if(phase>=.65)assert.ok(group.transparent>0,`${group.name} misses the extrusion`);else assert.equal(group.transparent,0);}
   }
-  console.log('✓ Plan and 3D share classified faces, silhouettes, extrusions, shading and cuts at every stage; first-tab mode selector removed.');
+  console.log('✓ Plan and 3D share classified faces, silhouettes, extrusions, shading and cuts at every stage.');
 
   const cuts=await page.evaluate(()=>{const d=urbanData(state.light),physical=d.surfaces.filter(f=>f.kind==='building'||URBAN3.receivers[f.owner].face===0);return {old:physical.flatMap(f=>cutEdges(f.poly,URBAN3.receivers[f.owner].poly)).length,clean:urbanReceiverCuts(d).length};});
   assert.ok(cuts.clean>0&&cuts.clean<cuts.old,JSON.stringify(cuts));console.log('✓ Internal fragment outlines removed:',cuts);
@@ -52,9 +53,30 @@ const scratch=path.resolve(__dirname,'../.codex-scratch.nosync');fs.mkdirSync(sc
   await page.locator('#exportMode').selectOption('panel');const pending=page.waitForEvent('download');await page.locator('#svg').click();const dl=await pending;const svgPath=path.join(scratch,'shadows-shading.svg');await dl.saveAs(svgPath);const svg=fs.readFileSync(svgPath,'utf8');assert.ok(svg.includes('Visible and shadowed surfaces'));assert.ok(!svg.includes('Construct, then paint every receiver'));assert.ok(!/<(?:image|foreignObject)\b/.test(svg));assert.equal(await page.locator('#play').isDisabled(),true);
   const settings=await page.evaluate(()=>visibilityLab.getState()),settingsPath=path.join(scratch,'shadow-settings.json');fs.writeFileSync(settingsPath,JSON.stringify(settings));await page.locator('#reset').click();await page.locator('#load').setInputFiles(settingsPath);await page.waitForFunction(s=>JSON.stringify(visibilityLab.getState())===JSON.stringify(s),settings);
   await page.locator('[data-key=construction]').check();assert.equal(await page.locator('#play').isDisabled(),false);await page.locator('#restart').click();assert.equal(await page.locator('#explanationTitle').innerText(),'Which faces face the source?');
-  await page.locator('#panelToggle').uncheck();assert.equal(await page.locator('[data-key=variant]').count(),0);
+  await page.locator('#panelToggle').uncheck();assert.equal(await page.locator('[data-key=variant]').count(),1);
   await page.locator('#nav button[data-id=terrain]').click();assert.equal(await page.locator('[data-key=variant]').count(),1);assert.equal(await page.locator('[data-key=construction]').count(),0);
   console.log('✓ Toggle survives save/load and SVG export, restores construction controls, and leaves other tabs’ modes available.');
+
+  // The new comparison animates actual receiver intersections, rather than
+  // interpolating the completed query or painting a precomputed shadow mask.
+  await page.locator('#panelToggle').check();
+  const sequence=await page.evaluate(()=>{
+   const s={...state,scene:'shadows',variant:'subtract',construction:true,phase:0},trace=urbanSubtractionData(s.light);
+   const changed=trace.entries.findIndex(e=>e.changed&&e.removed.some(urbanPhysicalSurface));
+   return {stages:1+4*trace.entries.length,changed,total:trace.entries.length,work:trace.work};
+  });
+  assert.ok(sequence.changed>=0);
+  let previous=0;
+  for(const stage of [0,1+sequence.changed*4,2+sequence.changed*4,3+sequence.changed*4,4+sequence.changed*4,sequence.stages-1]){
+   const phase=stage===sequence.stages-1?1:(stage+.1)/sequence.stages;
+   await page.evaluate(phase=>visibilityLab.renderAt('shadows',phase,{variant:'subtract',construction:true}),phase);
+   const actual=await page.evaluate(()=>{const s=urbanSubtractionScene(state),groups=[...document.querySelectorAll('[data-shadow-view]')];return {error:visibilityLab.snapshot().error,stage:s.stage,part:s.part,final:s.final,work:panelData.progress.work,groups:groups.map(g=>[+g.dataset.faceCount,+g.dataset.edgeCount]),removed:s.entry?.removed.filter(urbanPhysicalSurface).length||0,orange:s.faces.filter(f=>f.color===C.orange||f.color===C.orangeLight).length,extrusions:s.faces.filter(f=>f.alpha!==undefined).length,area:s.surfaces.filter(urbanPhysicalSurface).reduce((a,f)=>a+area3(f.poly),0)};});
+   assert.equal(actual.error,null);assert.equal(actual.stage,stage);assert.equal(actual.groups.length,2);assert.deepEqual(actual.groups[0],actual.groups[1]);assert.ok(actual.work.geometricTests>=previous);previous=actual.work.geometricTests;
+   if(actual.part===2){assert.ok(actual.removed>0);assert.ok(actual.orange>1);assert.ok(actual.extrusions>0);}
+   if(actual.final){assert.equal(actual.orange,0);assert.equal(actual.extrusions,0);assert.deepEqual(actual.work,sequence.work);const complete=await page.evaluate(()=>urbanData(state.light).surfaces.filter(urbanPhysicalSurface).reduce((a,f)=>a+area3(f.poly),0));assert.ok(Math.abs(actual.area-complete)<1e-7);}
+  }
+  console.log('✓ Face-by-face subtraction displays real receiver intersections, advances recorded work, shares plan geometry, and ends in the same visible area.');
+  await page.locator('[data-key=construction]').uncheck();assert.equal(await page.locator('[data-shadow-sequence]').count(),0);assert.equal(await page.locator('#explanationTitle').innerText(),'Visible and shadowed surfaces');
 
   // Legacy surface-only settings migrate to the new toggle.
   const legacy=await page.evaluate(()=>validate({scene:'shadows',variant:'surface',phase:.2}));assert.equal(legacy.variant,'construct');assert.equal(legacy.construction,false);

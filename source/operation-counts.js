@@ -29,7 +29,7 @@ function measureSolverWork(run){
   visibility=(q,scene)=>runTrace(countedEvent2,[q,scene]);
   visibility3=(q,receivers,occluders,history=false)=>runTrace(countedVisibility3,[q,receivers,occluders,history]);
   rasterCube=function(...args){const result=saved.rasterCube(...args);work.rasterCoverageTests+=3*result.stats.pixelCandidates;work.rasterDepthTests+=result.stats.fragments;return result;};
-  const value=run();if(value&&typeof value.then==='function')throw Error('Solver workload measurement requires a synchronous callback.');const total=finishSolverWork(work);if(trace?.visits.length)trace.visits[trace.visits.length-1]=total;return {value,work:total,trace};
+  const value=run(checkpoint);if(value&&typeof value.then==='function')throw Error('Solver workload measurement requires a synchronous callback.');const total=finishSolverWork(work);if(trace?.visits.length)trace.visits[trace.visits.length-1]=total;return {value,work:total,trace};
  }finally{
   ({clip,val3,rayHit,rayTri3,intersectFast,rayBox,locate2,clipSegment2,expandVector2,expand3,referenceSurface3,visibility3,visibility,rasterCube}=saved);solverWorkActive=false;
  }

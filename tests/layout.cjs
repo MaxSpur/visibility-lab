@@ -41,6 +41,7 @@ fs.mkdirSync(OUT,{recursive:true});
    if(data.panel){
     if(data.panelScroll.height>data.panelScroll.clientHeight+1||data.panelScroll.width>data.panelScroll.clientWidth+1)issues.push('explanation requires scrolling: '+JSON.stringify(data.panelScroll));
     if(data.footer.bottom>data.panelRect.bottom+1||data.body.bottom>data.panelRect.bottom+1)issues.push('explanation content extends beyond panel');
+    if(data.body.bottom>data.footer.y+1)issues.push('explanation body overlaps anchored readouts');
     panelTops.push({scene:settings.scene,variant:settings.variant,phase:settings.phase,title:data.titleText,titleY:data.title.y,bodyY:data.body.y,titleHeight:data.title.height});
    }
    const entry={width,height,settings,controlCount:data.controlCount,stage:data.stage,issues};reports.push(entry);frames++;
