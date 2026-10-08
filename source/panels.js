@@ -26,7 +26,7 @@ function render(overrides={}){
   if(rect.width>0&&rect.height>0)W=H*rect.width/rect.height;
   view.setAttribute('viewBox',`0 0 ${svgNumber(W)} ${H}`);
   ctx.reset();ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  try{({shadows:drawShadows,expansion:drawExpansion,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);drawPanel(s);}
+  try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);drawPanel(s);}
   catch(e){console.error(e);setPanel({title:'This configuration could not be completed',body:[e.message,'Reset the scene or use a coarser terrain mesh.'],legend:[],note:'The calculation stopped; the result is incomplete.'});drawPanel(s);$('status').textContent=e.message;window.lastLabError=e.message;}
   ctx.commit();
   if(!exporting){syncTransport();updateLive();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}

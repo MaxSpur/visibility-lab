@@ -1,7 +1,7 @@
 const DEGREES=180/Math.PI;
 const MIN_CAMERA_ELEVATION=1/DEGREES,MAX_CAMERA_ELEVATION=89/DEGREES;
 function cameraAzimuth(value){return value < -Math.PI || value >= Math.PI ? wrap(value+Math.PI)-Math.PI : value;}
-function buildDocs(){const d=DOCS[state.scene];$('docTitle').textContent=d.title;$('methodDoc').innerHTML=d.method;$('detailDoc').innerHTML=d.detail;$('costDoc').innerHTML=COST_HTML;$('sourceDoc').innerHTML=SOURCES_HTML;renderBenchmarkTable();}
+function buildDocs(){const d=DOCS[state.scene];$('docTitle').textContent=d.title;$('methodDoc').innerHTML=d.method;$('detailDoc').innerHTML=d.detail;$('costDoc').innerHTML=d.cost||COST_HTML;$('sourceDoc').innerHTML=d.sources||SOURCES_HTML;$('acronymDoc').innerHTML=ACRONYMS_HTML;renderBenchmarkTable();}
 function selectControl(label,key,options,after){const el=document.createElement('label');el.className='setting';const span=document.createElement('span');span.textContent=label;const input=document.createElement('select');input.dataset.key=key;input.setAttribute('aria-label',label);options.forEach(([v,t])=>{const o=document.createElement('option');o.value=v;o.textContent=t;input.append(o);});input.value=state[key];input.onchange=()=>{stopPlaying();state[key]=typeof DEFAULT[key]==='number'?+input.value:input.value;after?.();state=validate(state);buildControls();buildDocs();render();};el.append(span,input);return el;}
 function sliderControl(label,key,min,max,step=1,get=null,set=null,digits=null){
  const el=document.createElement('label');el.className='setting';
@@ -18,10 +18,11 @@ function checkControl(label,key,after){const el=document.createElement('label');
 function actionControl(text,fn,primary=false){const b=document.createElement('button');b.textContent=text;if(primary)b.className='primary';b.onclick=fn;return b;}
 function buildControls(){const m=MODES.find(m=>m.id===state.scene);document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.id===state.scene));const c=$('controls');c.replaceChildren();$('demonstrationControls').replaceChildren();if(state.scene!=='shadows'){const demonstration=selectControl('Demonstration','variant',m.variants,()=>state.phase=0);demonstration.classList.add('demonstration-setting');$('demonstrationControls').append(demonstration);placeDemonstrationControl(state.panel);}
  if(['metrics','cost'].includes(state.scene))c.append(selectControl('Dimension','dimension',[['2d','2D: planar area / walls'],['3d','3D: terrain surface area']],()=>{state.phase=0;state.shadowEnvelope=false;}));
- const is2=['expansion','events'].includes(state.scene)||['metrics','cost'].includes(state.scene)&&state.dimension==='2d';
+ const is2=['expansion','subtraction','events'].includes(state.scene)||['metrics','cost'].includes(state.scene)&&state.dimension==='2d';
  const is3=['air','terrain','projection'].includes(state.scene)||['metrics','cost'].includes(state.scene)&&state.dimension==='3d';
  if(is2)c.append(selectControl('Plan geometry','map',SCENES.map((s,i)=>[i,s.name]),()=>state.q2=[...SCENES[state.map].observer]));
  if(state.scene==='expansion'){c.append(selectControl('Point location','locator',[['index','Bounding-box tree + side tests'],['scan','Linear triangle scan']]));if(state.variant==='opening')c.append(sliderControl('Opening entry (0 = automatically chosen)','opening',0,80));c.append(checkControl('Input triangulation','wire'),checkControl('Keep completed cut edges','cuts'));}
+ if(state.scene==='subtraction')c.append(checkControl('Retained shadow boundaries','cuts'));
  if(state.scene==='shadows'){c.append(sliderControl('Source height (m)','lightHeight',2,40,.25,()=>state.light[2],v=>state.light[2]=v));c.append(checkControl('Show construction','construction',stopPlaying),checkControl('Plan inset','inset'));}
  if(is3){c.append(sliderControl('Eye height above terrain (m)','eye',1,30,.25));c.append(selectControl('Terrain complexity','density',[['coarse','48 terrain triangles'],['regular','140 terrain triangles'],['fine','192 terrain triangles']]));}
  if(state.scene==='air'){c.append(sliderControl('Ceiling clearance above max height (m)','ceiling',.25,10,.25),checkControl('Entire 3D air-cell wireframe','airWire'),checkControl('Previous clipped air cells (one branch)','history'));}

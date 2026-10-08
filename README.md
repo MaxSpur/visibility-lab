@@ -16,9 +16,9 @@ Then open [the lab](http://127.0.0.1:8764/). `index.html` forwards to the lab wh
 
 Choose a tab. Shadow construction has one sequence: its plan inset follows the same stage and projects the highlighted faces, silhouettes, and extrusions from above. Turn off **Show construction** for the final shaded ground, roofs, and walls, without construction geometry or cut outlines. Other tabs offer a mode dropdown above the explanation title. Play, scrub the progress slider, or use Previous / Next step to examine the sequence. Larger titles and step explanations accompany the diagram; statistics sit immediately above its legend. Hide the explanation panel to enlarge the graphic. **Full screen** expands the whole page, including controls; Esc exits.
 
-Drag the purple observer to move it. Drag a 3D background to rotate the illustration naturally with horizontal pointer movement. Camera angle controls display degrees to one decimal place, with a full azimuth circle and elevations from 1° to 89°; settings files continue to store radians for compatibility with Astra v3. Keys 1–8 select tabs, Space plays or pauses, and arrow keys step through a construction.
+Drag the purple observer to move it. Drag a 3D background to rotate the illustration naturally with horizontal pointer movement. Camera angle controls display degrees to one decimal place, with a full azimuth circle and elevations from 1° to 89°; settings files continue to store radians for compatibility with Astra v3. Keys 1–9 select tabs, Space plays or pauses, and arrow keys step through a construction.
 
-The lab covers building shadows, 2D triangle expansion and point location, terrain beams through air cells, terrain-face shadow cuts, projected terrain fragments, geometry versus sampled surfaces, computational effort, and angular events. Detailed explanations and sources are below the demonstration.
+The lab covers building shadows, 2D triangle expansion and point location, continuous wall-shadow subtraction, terrain beams through air cells, terrain-face shadow cuts, projected terrain fragments, geometry versus sampled surfaces, computational effort, and angular events. Detailed explanations, implementation equations, precision limits, computational effort and sources are below each demonstration. A shared Terms and acronyms section defines abbreviations. Point-location playback ends at the first containing triangle; wall-shadow subtraction has its own tab and requires only polygon boundaries.
 
 ## Export illustrations
 
@@ -26,7 +26,7 @@ The lab covers building shadows, 2D triangle expansion and point location, terra
 
 ## Accuracy and limits
 
-The computations are preserved from Astra v3. Continuous polygons use floating-point arithmetic and omit tangential zero-area features; they are not certified exact arithmetic. Terrain is synthetic and has no overhangs, vegetation, Earth curvature or refraction. Geometry, directional sampling, surface sampling and rasterization produce different approximations; the benchmark reports local CPU JavaScript work, not a universal performance ranking.
+Continuous polygons use floating-point arithmetic and omit tangential zero-area features; they are not certified exact arithmetic. Terrain is synthetic and has no overhangs, vegetation, Earth curvature or refraction. Geometry, directional sampling, surface sampling and rasterization produce different approximations; the benchmark reports local CPU JavaScript work, not a universal performance ranking.
 
 SVG occlusion handles opaque display surfaces separately from the visibility calculation. Transparent construction faces use depth ordering. Dense sample displays can draw more slowly; calculated sample counts are distinct from the rays actually drawn. Screen layout is checked at 1920 × 1080 and 3840 × 2160.
 
@@ -40,6 +40,7 @@ python3 build.py --check
 node tests/geometry-baseline.cjs
 node tests/svg-world.test.cjs
 node tests/receiver-boundaries.test.cjs
+node tests/wall-shadow2.test.cjs
 ```
 
 Browser tests require Playwright and Chromium. Use an existing installation by setting `PLAYWRIGHT_MODULE` to its module path, or install development tools locally:
@@ -56,6 +57,7 @@ node tests/layout.cjs
 node tests/interface.cjs
 node tests/shared-ui.cjs
 node tests/shadows.cjs
+node tests/expansion.cjs
 ```
 
 Tests write screenshots and downloads to the ignored `.codex-scratch.nosync/` directory. Geometry checks pin the original computational core and exercise independent invariants; when the original Astra HTML is present in the parent directory, they additionally compare its outputs. See [AGENTS.md](AGENTS.md) for source orientation and editing conventions.

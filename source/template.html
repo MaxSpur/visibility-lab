@@ -29,7 +29,7 @@
 <button id="next" title="Next construction step (→)">Next step</button>
 <input id="phase" type="range" min="0" max="1" step=".001" value="0" aria-label="Construction progress">
 <output id="phaseVal" for="phase">0%</output>
-<label>Loop <select id="duration" aria-label="Animation loop duration"><option>6</option><option>8</option><option selected>12</option><option>16</option><option>24</option><option>40</option></select> s</label>
+<label><span id="timingLabel">Loop</span> <select id="duration" aria-label="Animation loop duration"><option>6</option><option>8</option><option selected>12</option><option>16</option><option>24</option><option>40</option></select> s</label>
 <button id="fullscreen">Full screen</button>
 </div>
 <div class="settings" id="controls" aria-label="Demonstration settings"></div>
@@ -52,10 +52,11 @@
 <details open><summary>How this calculation works</summary><div id="methodDoc"></div></details>
 <details><summary>Implementation details and precision</summary><div id="detailDoc"></div></details>
 <details><summary>Computational effort and which method to choose</summary><div id="costDoc"></div></details>
+<details><summary>Terms and acronyms</summary><div id="acronymDoc"></div></details>
 <details><summary>Sources and interpretation</summary><div id="sourceDoc"></div></details>
 </section>
 </main>
-<footer class="page-footer"><p><kbd>1</kbd>–<kbd>8</kbd> select tabs · <kbd>Space</kbd> plays / pauses · <kbd>←</kbd> / <kbd>→</kbd> step through the construction. Drag the purple observer; drag a 3D background to orbit the illustration camera. Synthetic scenes use meters. Positive-area polygon results use floating-point arithmetic. SVG rendering is separate from the visibility solver.</p></footer>
+<footer class="page-footer"><p><kbd>1</kbd>–<kbd>9</kbd> select tabs · <kbd>Space</kbd> plays / pauses · <kbd>←</kbd> / <kbd>→</kbd> step through the construction. Drag the purple observer; drag a 3D background to orbit the illustration camera. Synthetic scenes use meters. Positive-area polygon results use floating-point arithmetic. SVG rendering is separate from the visibility solver.</p></footer>
 <script>/*SCRIPTS*/</script>
 </body>
 </html>

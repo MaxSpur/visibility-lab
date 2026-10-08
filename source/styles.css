@@ -107,6 +107,9 @@ h1 small { font-size:.62em; color:var(--teal); font-weight:600; border:1px solid
 .docs p { margin:.6rem 0; max-width:115ch; }
 .docs details { border-top:1px solid var(--line); margin-top:.9rem; padding-top:.7rem; }
 .docs summary { cursor:pointer; color:var(--teal); font-weight:650; }
+#acronymDoc dl { display:grid; grid-template-columns:9rem minmax(0,1fr); gap:.45rem 1rem; max-width:115ch; }
+#acronymDoc dt { font-weight:650; }
+#acronymDoc dd { margin:0; }
 .docs .cols { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
 .docs table { border-collapse:collapse; width:100%; font-size:.88rem; }
 .docs th,.docs td { border-bottom:1px solid var(--line); padding:.6rem; text-align:left; vertical-align:top; }
@@ -136,6 +139,8 @@ kbd { font:inherit; border:1px solid var(--line); padding:0 .2rem; }
   .transport>input[type=range] { flex-basis:50%; }
   .setting { min-width:9rem; }
   .docs .cols { grid-template-columns:1fr; }
+  #acronymDoc dl { grid-template-columns:1fr; gap:.15rem; }
+  #acronymDoc dd { margin-bottom:.6rem; }
 }
 :root:fullscreen { overflow:hidden; background:var(--field); }
 :root:fullscreen #presentation { height:100svh; min-height:0; }
