@@ -45,7 +45,7 @@ fs.mkdirSync(scratch,{recursive:true});
     const selected=await page.locator('#explanationTitle').evaluate(el=>{const r=document.createRange();r.selectNodeContents(el);const s=window.getSelection();s.removeAllRanges();s.addRange(r);return s.toString();});assert.ok(selected.length>5);
     console.log('✓ Stepping, playback and explanation text selection.');
 
-    await page.evaluate(()=>visibilityLab.renderAt('terrain',1,{variant:'result',panel:false,exportMode:'panel'}));
+    await page.evaluate(()=>visibilityLab.renderAt('terrain',1,{variant:'all',panel:false,exportMode:'panel'}));
     const title=await page.locator('#explanationTitle').textContent();
     for(const mode of ['graphics','panel']){
       await page.locator('#exportMode').selectOption(mode);

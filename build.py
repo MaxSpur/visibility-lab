@@ -6,7 +6,7 @@ import argparse
 ROOT = Path(__file__).resolve().parent
 MODULES = (
     'geometry', 'receiver-boundaries', 'point-location', 'wall-shadow2', 'operation-counts', 'svg-context', 'svg-world', 'reference-notes', 'wall-shadow-docs',
-    'scenes', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
+    'scenes', 'terrain-views', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
 )
 
 def build():

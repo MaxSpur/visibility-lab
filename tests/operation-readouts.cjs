@@ -11,10 +11,18 @@ const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html',sc
   for(const settings of cases.concat(['surface','angular','raster'].map(sampler=>({scene:'metrics',variant:'still',dimension:'3d',sampler})),[{scene:'cost',variant:'bench',dimension:'3d'},{scene:'cost',variant:'raster',dimension:'3d'}])){
    const data=await page.evaluate(settings=>{visibilityLab.renderAt(settings.scene,.55,{density:'coarse',sampleBudget:140,cubeN:4,rays:16,rasterN:8,...settings});const s=visibilityLab.snapshot();return {error:s.error,work:s.panel.work,stats:s.panel.stats};},settings);
    assert.equal(data.error,null,JSON.stringify(settings));assert.ok(data.work.entries.length>=1,JSON.stringify(settings));
-   for(const entry of data.work.entries){assert.ok(Number.isInteger(entry.work.geometricTests)&&entry.work.geometricTests>0,JSON.stringify({settings,entry}));assert.ok(Number.isInteger(entry.work.polygonClips)&&entry.work.polygonClips>=0);}
+   for(const entry of data.work.entries){assert.ok(Number.isInteger(entry.work.geometricTests)&&entry.work.geometricTests>=0,JSON.stringify({settings,entry}));assert.ok(Number.isInteger(entry.work.polygonClips)&&entry.work.polygonClips>=0);}
    assert.ok(data.stats.some(([name])=>name.startsWith('Geometric tests')));assert.ok(data.stats.some(([name])=>name.includes('clips')||name.includes('Clip passes')));
   }
   console.log('✓ Every tab/variant shows scoped integer operation counts; 3D sample totals include reconstruction.');
+  // The displayed counters are stage prefixes; timings/benchmarks remain full solves.
+  for(const [scene,variant] of [['subtraction','subtract'],['expansion','expand'],['air','expand'],['terrain','all'],['events','sweep']]){
+   const counts=[];
+   for(const phase of [0,.5,1])counts.push(await page.evaluate(({scene,variant,phase})=>{visibilityLab.renderAt(scene,phase,{variant,density:'coarse',map:0,q2:[43,32]});const w=visibilityLab.snapshot().panel.work.entries[0].work;return [w.geometricTests,w.polygonClips,w.segmentClips];},{scene,variant,phase}));
+   for(let i=1;i<counts.length;i++)for(let j=0;j<3;j++)assert.ok(counts[i][j]>=counts[i-1][j],JSON.stringify({scene,variant,counts}));
+   assert.ok(counts[2][0]>counts[0][0],JSON.stringify({scene,variant,counts}));
+  }
+  console.log('✓ Accumulated work follows slider progress and rewinding rather than counting rendered frames.');
 
   await page.evaluate(()=>visibilityLab.renderAt('subtraction',1,{q2:[43,32],map:0}));
   let s=await page.evaluate(()=>visibilityLab.snapshot());assert.equal(s.panel.work.entries[0].work.geometricTests,2633);assert.equal(s.panel.work.entries[0].work.polygonClips,533);assert.equal(s.panel.work.preparation.geometricTests,415);

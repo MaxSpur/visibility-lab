@@ -29,7 +29,7 @@ fs.mkdirSync(scratch,{recursive:true});
 
   // Hiding the explanation must leave the mode selector available.
   await page.locator('#panelToggle').uncheck();assert.equal(await page.locator('#controls [data-key=variant]').count(),1);
-  await page.locator('[data-key=variant]').selectOption('result');assert.equal((await page.evaluate(()=>visibilityLab.getState())).variant,'result');
+  await page.locator('[data-key=variant]').selectOption('project');assert.equal((await page.evaluate(()=>visibilityLab.getState())).variant,'project');
   await page.locator('#panelToggle').check();assert.equal(await page.locator('#demonstrationControls [data-key=variant]').count(),1);assert.equal(await page.locator('#controls [data-key=variant]').count(),0);
   console.log('✓ Mode selection remains accessible with the explanation hidden.');
 
