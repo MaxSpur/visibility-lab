@@ -15,13 +15,30 @@ fs.mkdirSync(OUT,{recursive:true});
   page.on('pageerror',e=>pageErrors.push({width,message:e.message}));
   await page.goto(URL);await page.waitForFunction(()=>window.visibilityLab?.version===4);
   const {modes,defaults}=await page.evaluate(()=>({modes:MODES.map(m=>({id:m.id,variants:m.variants.map(v=>v[0])})),defaults:visibilityLab.getState()}));
+  assert.equal(modes.length,8,'Only the eight requested demonstration tabs remain');
+  const branding=await page.evaluate(async()=>{
+   const images=[...document.querySelectorAll('.brand-links img')];
+   await Promise.all(images.map(i=>i.decode()));
+   const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,centerY:r.y+r.height/2};};
+   return{images:images.map(i=>({alt:i.alt,loaded:i.complete&&i.naturalWidth>0,rect:rect(i),href:i.closest('a').href})),title:document.querySelector('h1').textContent,author:{text:document.querySelector('.author-link').textContent,href:document.querySelector('.author-link').href,rect:rect(document.querySelector('.author-link'))},header:rect(document.querySelector('.lab-header'))};
+  });
+  assert.deepEqual(branding.images.map(i=>i.alt),['Geovis','LASTIG','IGN','Géodata Paris','Université Gustave Eiffel']);
+  assert.deepEqual(branding.images.map(i=>i.href),['https://www.umr-lastig.fr/geovis/','https://www.umr-lastig.fr/','https://www.ign.fr/','https://geodata-paris.fr/','https://www.univ-gustave-eiffel.fr/']);
+  assert.equal(branding.title,'Geometric Visibility Lab');
+  assert.equal(branding.author.text,'MAXIM SPUR');
+  assert.equal(branding.author.href,'https://www.umr-lastig.fr/maxim-spur/');
+  for(const i of branding.images)assert.ok(i.loaded&&i.rect.width>0&&i.rect.height>0&&i.rect.right<=width&&i.rect.bottom<=height,'Logo loaded and visible: '+i.alt);
+  const centers=branding.images.map(i=>i.rect.centerY);
+  assert.ok(Math.max(...centers)-Math.min(...centers)<1,'Logo artwork boxes share one vertical center');
+  for(let i=1;i<branding.images.length;i++)assert.ok(branding.images[i].rect.x>=branding.images[i-1].rect.right,'Affiliations retain the requested visual order');
+  assert.ok(branding.author.rect.right<=width&&branding.author.rect.x>branding.images.at(-1).rect.right,'Author stays at the upper right without overlapping affiliations');
   const cases=[];
   for(const mode of modes)for(const variant of mode.variants)for(const phase of [0,.5,1])for(const panel of [true,false])cases.push({scene:mode.id,variant,phase,panel});
   for(const phase of [0,.35,.65,1])for(const panel of [true,false])cases.push({scene:'shadows',variant:'construct',phase,panel,construction:false});
   // Dense controls are layout-sensitive; solver budgets are low because this
   // test checks DOM layout, with numerical/high-density gates tested elsewhere.
   for(const variant of ['raycast','raster'])for(const panel of [true,false])cases.push({scene:'metrics',variant,phase:.5,panel,dimension:'3d',shadowEnvelope:true,sampleWire:true});
-  for(const panel of [true,false])cases.push({scene:'cost',variant:'bench',phase:.5,panel,dimension:'3d',sampleBudget:140,cubeN:4});
+  for(const dimension of ['2d','3d'])cases.push({scene:'cost',variant:'bench',phase:.5,panel:true,dimension});
   for(const method of ['raycast','raster'])for(const phase of [0,.5,1])cases.push({scene:'metrics',variant:method,dimension:'2d',metric:'walls',phase,panel:true});
   cases.push({scene:'metrics',variant:'raycast',phase:.5,panel:true,dimension:'3d',stressControls:true});
   let frames=0;const panelTops=[];
@@ -40,6 +57,10 @@ fs.mkdirSync(OUT,{recursive:true});
    if(data.pageWidth>width)issues.push('horizontal page overflow');
    if(new Set(data.buttonRects.map(r=>Math.round(r.y))).size!==1)issues.push('nav buttons wrap');
    for(const r of data.buttonRects)if(r.right>width+.5||r.x<-.5)issues.push('nav button outside viewport');
+   if(settings.scene==='cost'){
+    if(data.panel)issues.push('benchmark explanation panel should be hidden');
+    if(data.transport.width!==0||data.transport.height!==0)issues.push('benchmark playback controls should be hidden');
+   }
    if(data.panel){
     if(data.panelScroll.height>data.panelScroll.clientHeight+1||data.panelScroll.width>data.panelScroll.clientWidth+1)issues.push('explanation requires scrolling: '+JSON.stringify(data.panelScroll));
     if(data.footer.bottom>data.panelRect.bottom+1||data.body.bottom>data.panelRect.bottom+1)issues.push('explanation content extends beyond panel');

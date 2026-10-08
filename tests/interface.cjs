@@ -13,7 +13,7 @@ fs.mkdirSync(scratch,{recursive:true});
     assert.equal(await page.locator('canvas,#record,#cancel').count(),0);
     assert.equal(await page.locator('#view image,#view foreignObject').count(),0);
     assert.equal(await page.locator('#view text').first().evaluate(el=>getComputedStyle(el).userSelect),'text');
-    assert.equal(await page.locator('h1').innerText(),'Geometric Visibility Lab v4');
+    assert.equal(await page.locator('h1').innerText(),'Geometric Visibility Lab');
     console.log('✓ Native SVG view, selectable labels, no recorder or raster display.');
 
     // The same physical point must map correctly before and after panel resizing.
@@ -33,7 +33,7 @@ fs.mkdirSync(scratch,{recursive:true});
     console.log('✓ Orbit changes the illustration camera without moving the observer.');
 
     await page.locator('#fullscreen').click();await page.waitForFunction(()=>document.fullscreenElement===document.documentElement);
-    assert.equal(await page.locator('#nav').isVisible(),true);assert.equal(await page.locator('#controls').isVisible(),true);assert.equal(await page.locator('#svg').isVisible(),true);assert.equal(await page.locator('.docs').isVisible(),false);
+    assert.equal(await page.locator('#nav').isVisible(),true);assert.equal(await page.locator('#controls').isVisible(),true);assert.equal(await page.locator('#svg').isVisible(),true);for(const section of ['#sceneDocs','#generalDocs'])assert.equal(await page.locator(section).isVisible(),false);
     await page.screenshot({path:path.join(scratch,'fullscreen-1080p.png')});
     await page.locator('#fullscreen').click();await page.waitForFunction(()=>!document.fullscreenElement);
     console.log('✓ Whole-page fullscreen retains tabs, controls and exports.');
@@ -63,11 +63,37 @@ fs.mkdirSync(scratch,{recursive:true});
     await page.locator('#reset').click();await page.locator('#load').setInputFiles(jsonPath);await page.waitForFunction(saved=>JSON.stringify(visibilityLab.getState())===JSON.stringify(saved),saved);
     console.log('✓ Save/load settings restores the demonstration configuration.');
 
-    await page.evaluate(()=>visibilityLab.renderAt('cost',0,{dimension:'2d',rays:64,rasterN:16}));
-    await page.locator('#controls button').filter({hasText:'Run measured comparison'}).click();await page.waitForFunction(()=>visibilityLab.benchmark()?.dimension==='2d',{},{timeout:120000});await page.waitForFunction(()=>!document.querySelector('#play').disabled);
-    const result=await page.evaluate(()=>visibilityLab.benchmark());assert.ok(result.rows.some(r=>r.family==='geometry'));assert.ok(result.rows.some(r=>r.family==='raster'));assert.ok(result.rows.every(r=>Number.isFinite(r.query)&&Number.isFinite(r.error)));assert.ok(await page.locator('#view text').filter({hasText:'Query + reconstruction'}).count());
-    await page.locator('#tests').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Passed:'),{},{timeout:120000});
-    console.log('✓ Measured comparison chart and independent geometry checks still run.');
+    await page.evaluate(()=>visibilityLab.renderAt('cost',0));
+    assert.equal(await page.locator('#nav button').count(),8);
+    assert.equal(await page.locator('#nav button[data-id=events]').count(),0);
+    assert.equal(await page.locator('[data-key=variant]').count(),0);
+    assert.equal(await page.locator('.transport').isVisible(),false);
+    assert.equal(await page.locator('#controls [data-key]').count(),0);
+    assert.equal(await page.locator('#sceneDocs #detailDoc').count(),1);
+    assert.equal(await page.locator('#generalDocs #workDetailDoc').count(),1);
+    await page.getByRole('button',{name:'Run benchmarks',exact:true}).click();
+    await page.waitForFunction(()=>visibilityLab.benchmark()?.rows?.length&&!benchmarkBusy,{},{timeout:240000});
+    const result=await page.evaluate(()=>visibilityLab.benchmark());
+    assert.equal(result.protocol.planCases,18);assert.equal(result.protocol.terrainCases,18);assert.equal(result.protocol.urbanCases,6);
+    assert.equal(result.protocol.repeats,3);assert.equal(result.protocol.warmups,1);
+    assert.equal(result.protocol.batching.targetMs,5);assert.equal(result.protocol.batching.maxBatch,4096);
+    for(const record of result.cases){
+      assert.ok(Number.isInteger(record.queryBatchSize)&&record.queryBatchSize>=1&&record.queryBatchSize<=4096,record.methodId);
+      assert.equal(record.queryRuns.length,3);assert.equal(record.queryBatchElapsedMs.length,3);
+      record.queryRuns.forEach((value,i)=>assert.equal(value,record.queryBatchElapsedMs[i]/record.queryBatchSize));
+      if(record.recoveryBatchSize){assert.ok(Number.isInteger(record.recoveryBatchSize)&&record.recoveryBatchSize<=4096);assert.equal(record.recoveryRuns.length,3);assert.equal(record.recoveryBatchElapsedMs.length,3);record.recoveryRuns.forEach((value,i)=>assert.equal(value,record.recoveryBatchElapsedMs[i]/record.recoveryBatchSize));}
+      else{assert.equal(record.recoveryBatchSize,0);assert.deepEqual(record.recoveryRuns,[]);assert.deepEqual(record.recoveryBatchElapsedMs,[]);}
+    }
+    assert.ok(result.rows.every(row=>row.query>0),'Every measured query median is positive after timer normalization');
+    for(const methodId of ['expand2','wall2','ray2-linear','ray2-indexed','raster2','shadow3','beam3','ray3-linear','ray3-indexed','raster3','viewport3','urban3'])assert.ok(result.rows.some(r=>r.methodId===methodId),methodId);
+    assert.ok(result.cases.every(r=>Number.isFinite(r.query)&&Number.isFinite(r.total)&&(r.error===null||Number.isFinite(r.error))));
+    assert.ok(result.rows.every(r=>r.stats.total.q1<=r.stats.total.median&&r.stats.total.median<=r.stats.total.q3));
+    assert.ok(await page.locator('#view text').count()>20,'Benchmark graph has accessible vector labels');
+    assert.equal(await page.locator('.transport').isVisible(),false);
+    fs.writeFileSync(path.join(scratch,'benchmarks-measured.json'),JSON.stringify(result,null,2));
+    for(const [width,height] of [[3840,2160],[1920,1080]]){await page.setViewportSize({width,height});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(scratch,`benchmarks-measured-${width}.png`)});}
+    await page.locator('#nav button[data-id=expansion]').click();await page.locator('#tests').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Passed:'),{},{timeout:120000});
+    console.log('✓ Graph-only fixed benchmarks cover every method, paired observer cases and spatial quartiles; independent geometry checks still run.');
 
     assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);
     await page.setViewportSize({width:3840,height:2160});await page.evaluate(()=>visibilityLab.renderAt('projection',.65,{panel:true}));await page.screenshot({path:path.join(scratch,'v4-4k.png')});

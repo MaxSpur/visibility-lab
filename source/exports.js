@@ -39,6 +39,7 @@ function panelSVG(){
   return '<svg xmlns="http://www.w3.org/2000/svg" width="'+svgNumber(stage.width)+'" height="'+svgNumber(stage.height)+'" viewBox="0 0 '+svgNumber(stage.width)+' '+svgNumber(stage.height)+'"><rect width="100%" height="100%" fill="white"/>'+new XMLSerializer().serializeToString(copy)+'<rect x="'+svgNumber(r.left-stage.left)+'" y="0" width="'+svgNumber(r.width)+'" height="'+svgNumber(stage.height)+'" fill="#f3f7f7"/><line x1="'+svgNumber(r.left-stage.left)+'" x2="'+svgNumber(r.left-stage.left)+'" y1="0" y2="'+svgNumber(stage.height)+'" stroke="#c8d5da"/>'+boxes+panelControlsSVG(panel,stage)+panelTextSVG(panel,stage)+'</svg>';
 }
 function svgForExport(mode=state.exportMode){
+  if(state.scene==='cost')mode='graphics';
   try{render({panel:mode==='panel'});return mode==='panel'?panelSVG():graphicSVG();}
   finally{render();}
 }

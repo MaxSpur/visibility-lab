@@ -3,14 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Geometric Visibility Lab · v4</title>
+<title>Geometric Visibility Lab</title>
 <style>/*STYLES*/</style>
 </head>
 <body>
 <main>
 <section id="presentation" aria-label="Interactive visibility lab">
 <header class="lab-header">
-<h1>Geometric Visibility Lab <small>v4</small></h1>
+<div class="lab-identity">
+<h1>Geometric Visibility Lab</h1>
+<div class="brand-links" aria-label="Research affiliations">
+<a href="https://www.umr-lastig.fr/geovis/" title="Geovis"><img class="brand-geovis" src="/*BRAND_GEOVIS*/" alt="Geovis" width="1300" height="1032"></a>
+<a href="https://www.umr-lastig.fr/" title="LASTIG"><img class="brand-lastig" src="/*BRAND_LASTIG*/" alt="LASTIG" width="1861" height="702"></a>
+<a href="https://www.ign.fr/" title="IGN"><img class="brand-ign" src="/*BRAND_IGN*/" alt="IGN" width="600" height="660"></a>
+<a href="https://geodata-paris.fr/" title="Géodata Paris"><img class="brand-geodata" src="/*BRAND_GEODATA*/" alt="Géodata Paris" width="316" height="106"></a>
+<a href="https://www.univ-gustave-eiffel.fr/" title="Université Gustave Eiffel"><img class="brand-eiffel" src="/*BRAND_EIFFEL*/" alt="Université Gustave Eiffel" width="500" height="103"></a>
+</div>
+</div>
+<a class="author-link" href="https://www.umr-lastig.fr/maxim-spur/">MAXIM SPUR</a>
 <nav id="nav" aria-label="Demonstration tabs"></nav>
 </header>
 <div id="stage">
@@ -22,7 +32,7 @@
 <div id="explanationFooter"></div>
 </aside>
 </div>
-<div class="transport" aria-label="Animation controls">
+<div class="transport" id="transport" aria-label="Animation controls">
 <button class="primary" id="play">Play</button>
 <button id="restart">Restart</button>
 <button id="prev" title="Previous construction step (←)">Previous step</button>
@@ -34,7 +44,7 @@
 </div>
 <div class="settings" id="controls" aria-label="Demonstration settings"></div>
 <div class="toolrow" aria-label="Export and settings tools">
-<label>Export <select id="exportMode"><option value="graphics">Graphics only</option><option value="panel">Graphic + explanation panel</option></select></label>
+<label class="export-choice">Export <select id="exportMode"><option value="graphics">Graphics only</option><option value="panel">Graphic + explanation panel</option></select></label>
 <button id="png">Save PNG</button>
 <button id="svg">Save SVG</button>
 <button id="save">Save settings</button>
@@ -45,18 +55,23 @@
 </div>
 <div class="demo-notes"><p id="help" class="help"></p><p id="status" role="status" aria-live="polite"></p></div>
 </section>
-<section class="docs" aria-label="Calculation reference">
+<section class="docs docs-specific" id="sceneDocs" aria-label="Current demonstration reference">
 <h2 id="docTitle"></h2>
 <div id="liveText" aria-live="polite"></div>
 <div id="benchmarkTable"></div>
 <details open><summary>How this calculation works</summary><div id="methodDoc"></div></details>
 <details><summary>Implementation details and precision</summary><div id="detailDoc"></div></details>
-<details><summary>Computational effort and which method to choose</summary><div id="costDoc"></div></details>
+<div id="sceneEffort"></div>
+</section>
+<section class="docs docs-general" id="generalDocs" aria-label="General reference">
+<h2>General reference</h2>
+<details open><summary>Computational effort and which method to choose</summary><div id="costDoc"></div></details>
+<details><summary>How workload readouts are counted</summary><div id="workDetailDoc"></div></details>
 <details><summary>Terms and acronyms</summary><div id="acronymDoc"></div></details>
 <details><summary>Sources and interpretation</summary><div id="sourceDoc"></div></details>
 </section>
 </main>
-<footer class="page-footer"><p><kbd>1</kbd>–<kbd>9</kbd> select tabs · <kbd>Space</kbd> plays / pauses · <kbd>←</kbd> / <kbd>→</kbd> step through the construction. Drag the purple observer; drag a 3D background to orbit the illustration camera. Synthetic scenes use meters. Positive-area polygon results use floating-point arithmetic. SVG rendering is separate from the visibility solver.</p></footer>
+<footer class="page-footer"><p><kbd>1</kbd>–<kbd>8</kbd> select tabs · <kbd>Space</kbd> plays / pauses · <kbd>←</kbd> / <kbd>→</kbd> step through the construction. Drag the purple observer; drag a 3D background to orbit the illustration camera. Synthetic scenes use meters. Positive-area polygon results use floating-point arithmetic. SVG rendering is separate from the visibility solver.</p></footer>
 <script>/*SCRIPTS*/</script>
 </body>
 </html>

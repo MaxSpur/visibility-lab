@@ -19,14 +19,14 @@ function drawPanel(s){
 function updateLive(){const p=panelData,text=(p.body||[]).map(t=>'<p>'+escapeHTML(t)+'</p>').join('');const table=p.metrics?'<table><thead><tr><th>Displayed quantity</th><th>Geometry</th><th>Samples</th><th>Difference</th></tr></thead><tbody>'+p.metrics.map(r=>'<tr>'+r.map(v=>'<td>'+escapeHTML(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'';replaceHTML($('liveText'),text+table);}
 function render(overrides={}){
   window.lastLabError=null;
-  const s={...state,...overrides};hitTargets=[];panelData={};
+  const s={...state,...overrides};if(s.scene==='cost')s.panel=false;hitTargets=[];panelData={};$('presentation').classList.toggle('benchmark-page',s.scene==='cost');
   $('explanation').hidden=!s.panel;
   placeDemonstrationControl(s.panel);
   const rect=view.getBoundingClientRect();
   if(rect.width>0&&rect.height>0)W=H*rect.width/rect.height;
   view.setAttribute('viewBox',`0 0 ${svgNumber(W)} ${H}`);
   ctx.reset();ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);addWorkReadouts(s);drawPanel(s);}
+  try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost}[s.scene])(s);addWorkReadouts(s);drawPanel(s);}
   catch(e){console.error(e);setPanel({title:'This configuration could not be completed',body:[e.message,'Reset the scene or use a coarser terrain mesh.'],legend:[],note:'The calculation stopped; the result is incomplete.'});drawPanel(s);$('status').textContent=e.message;window.lastLabError=e.message;}
   ctx.commit();
   if(!exporting){syncTransport();updateLive();updateWorkReference(s);if(s.scene==='cost')renderBenchmarkTable();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}

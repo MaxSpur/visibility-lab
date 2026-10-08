@@ -2,15 +2,25 @@
 """Build the portable lab from dependency-free authoring modules."""
 from pathlib import Path
 import argparse
+import base64
 
 ROOT = Path(__file__).resolve().parent
 MODULES = (
     'geometry', 'receiver-boundaries', 'point-location', 'wall-shadow2', 'operation-counts', 'shadow-stages', 'svg-context', 'svg-world', 'reference-notes', 'wall-shadow-docs',
-    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'sample-comparison', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
+    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'sample-comparison', 'benchmark-suite', 'benchmark-views', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
 )
 
 def build():
     template = (ROOT / 'source/template.html').read_text()
+    for key, filename, mime in (
+        ('GEOVIS', 'geovis.png', 'image/png'),
+        ('LASTIG', 'lastig.svg', 'image/svg+xml'),
+        ('IGN', 'ign.svg', 'image/svg+xml'),
+        ('GEODATA', 'geodata.svg', 'image/svg+xml'),
+        ('EIFFEL', 'eiffel.svg', 'image/svg+xml'),
+    ):
+        data = base64.b64encode((ROOT / 'assets/brand' / filename).read_bytes()).decode('ascii')
+        template = template.replace(f'/*BRAND_{key}*/', f'data:{mime};base64,{data}')
     scripts = '\n\n'.join(
         f'/* Module: {name} */\n' + (ROOT / f'source/{name}.js').read_text()
         for name in MODULES

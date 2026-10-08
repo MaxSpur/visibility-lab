@@ -1,6 +1,5 @@
 /* Count the named solver, not incidental scene drawing or independent error checks. */
-function benchmarkKey(s){return JSON.stringify(s.dimension==='2d'?[s.dimension,s.map,s.q2,s.rays,s.rasterN]:[s.dimension,s.density,s.qxy,s.eye,s.ceiling,s.cubeN,s.sampleBudget]);}
-function matchedBenchmark(s){return benchResult&&benchmarkKey(benchResult.settings)===benchmarkKey(s)?benchResult:null;}
+function matchedBenchmark(){return benchResult;}
 function rayResultWork(result){const work=emptySolverWork();work.rayPrimitiveTests=result.stats.tests;work.rayBoxTests=result.stats.boxes||0;return finishSolverWork(work);}
 function displayedSolverWork(s){
  const entry=(name,work)=>({name,work}),full='full solve',progress=panelData.progress;
@@ -9,24 +8,15 @@ function displayedSolverWork(s){
  if(s.scene==='shadows')return panelData.title==='The source is inside a solid'?{scope:'not solved',entries:[]}:{scope:progress&&s.construction?'receivers so far':full,entries:[entry('3D receiver shadow subtraction',(progress&&s.construction?recordedSnapshotWork(urbanData(s.light),progress.index):urbanData(s.light).work))]};
  if(s.scene==='subtraction'){const a=wallShadowData(s);return {scope:'shadows so far',entries:[entry('Wall-shadow subtraction',sumSolverWork(progress?recordedSnapshotWork(a,progress.index):a.work,a.preparation))],preparation:a.preparation};}
  if(s.scene==='expansion'){const d=twoData(s);if(s.variant==='locate'){const trace=pointLocationSequence(d.e.loc),k=Math.min(trace.length,Math.floor(s.phase*trace.length)+1);return {scope:'search so far',entries:[entry('Point location',pointLocationWork(trace.slice(0,k)))]};}return {scope:progress?.ids?'shown branch':'entries so far',entries:[entry('Triangle expansion',progress?recordedVisitWork(d.e,progress):d.e.work)]};}
- if(s.scene==='events'){const v=twoData(s).v;return {scope:'intervals so far',entries:[entry('Corner-event visibility',progress?recordedSnapshotWork(v,progress.index):v.work)]};}
  if(s.scene==='air'){const d=terrainState(s),e=getBeams(d);if(s.variant==='project'&&progress?.part===0)return {scope:'observer cell location',entries:[entry('Air-cell containment',e.workBeforeVisits)]};return {scope:progress?.ids?'shown branch':'entries so far',entries:[entry('Air-cell beam expansion',progress?recordedVisitWork(e,progress):e.work)]};}
  if(s.scene==='terrain'){const d=terrainState(s);if(s.variant==='one'){const id=s.face<0?blockingFace(d):clamp(s.face,0,d.model.tris.length-1);return {scope:'one shadow',entries:[entry('One face: retained + blocked pieces',progress&&progress.part<2?zero():singleShadow(d,id).work)]};}const a=s.variant==='all'?memo('history'+s.density+keyq(d.q)+s.order,()=>attachSolverWork(()=>referenceSurface3(d.q,d.model.tris,occluderOrder(d.model.tris,d.q,s.order),true))):getReference(d);return {scope:'shadows so far',entries:[entry('Terrain shadow subtraction',progress?recordedSnapshotWork(a,progress.index):a.work)]};}
  if(s.scene==='projection'){const g=G(s),workflow=projectionWorkflow(s,terrainState(s),{w:g.w*.40,h:405}),step=workflow.timeline[Math.min(workflow.timeline.length-1,Math.floor(s.phase*workflow.timeline.length))];return {scope:s.variant==='accumulate'?'viewport so far':'target clipping so far',entries:[entry('Viewport receiver traversal',step.work)]};}
  if(s.scene==='metrics')return sampleComparisonWork(s);
- if(s.scene==='cost'&&s.variant==='raster'){
-  if(s.dimension==='3d'){const ss=effectiveObserverState(s),d=terrainState(ss),sample=sampleData(s.scene==='cost'?{...ss,sampler:'raster',variant:'still'}:ss,d);return {scope:'query + output',entries:[entry('Continuous geometry',sumSolverWork(getReference(d).work,s.hidden?d.hiddenWork:null)),entry('Samples',sumSolverWork(sample.work,s.hidden?sample.hiddenWork:null))]};}
-  const ss=effectiveObserverState(s),d=twoData(ss);
-  if(s.scene==='cost'){const a=memo('raster2'+s.map+keyq(s.q2)+s.rasterN,()=>attachSolverWork(()=>rasterMap2(s.q2,d.scene,s.rasterN)));return {scope:'query + output',entries:[entry('Triangle expansion',d.e.work),entry('Raster samples',a.work)]};}
-  const n=s.variant==='rays'?Math.round(8+(s.rays-8)*s.phase):s.rays,a=memo('sample2'+s.map+keyq(d.q)+n,()=>attachSolverWork(()=>sampleRay2(d.q,d.scene,n,true)));
-  if(s.metric==='walls'){const coverage=memo('wallCoverage'+s.map+keyq(d.q)+n,()=>attachSolverWork(()=>wallCoverage(d.q,d.v,a)));return {scope:'query + output',entries:[entry('Corner-event wall geometry',d.v.work),entry('Sampled wall coverage',sumSolverWork(a.work,coverage.work))]};}
-  return {scope:'query + output',entries:[entry('Triangle expansion',d.e.work),entry('Sampled polygon',a.work)]};
- }
- // The chart itself is not a visibility solver. Show the continuous baseline
- // for this input; its benchmark rows carry each other method's own counts.
- return {scope:'reference solve',entries:[s.dimension==='2d'?entry('Triangle expansion',twoData(s).e.work):entry('Terrain shadow subtraction',getReference(terrainState(s)).work)]};
+ return {scope:'sampled benchmark suite',entries:[]};
 }
+
 function addWorkReadouts(s){
+ if(s.scene==='cost')return;
  const p=panelData,data=displayedSolverWork(s);p.work=data;p.stats=p.stats||[];
  const entries=data.entries,description=entries.map(e=>`${e.name}: ${solverWorkBreakdown(e.work)}`).join('\n');
  if(entries.length===2){p.stats.push(['Geometric tests · geometry / samples',entries.map(e=>number(e.work.geometricTests,0)).join(' / '),description],['Polygon clips · geometry / samples',entries.map(e=>number(e.work.polygonClips,0)).join(' / '),'Actual half-plane clipping passes. Sample counts include physical-surface reconstruction.']);if(entries.some(e=>e.work.segmentClips))p.stats.push(['Segment clips · geometry / samples',entries.map(e=>number(e.work.segmentClips,0)).join(' / '),'Clipping an opening or wall segment is separate from clipping a polygon.']);}

@@ -7,7 +7,7 @@ const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html',sc
  page.on('pageerror',e=>errors.push(e.message));
  try{
   await page.goto(url+'#expansion');await page.waitForFunction(()=>window.visibilityLab?.version===4);
-  assert.equal(await page.locator('#nav button').count(),9);
+  assert.equal(await page.locator('#nav button').count(),8);
   assert.equal(await page.locator('[data-key=variant] option[value=subtract]').count(),0);
   const locations=await page.evaluate(()=>{
    const result=[];
@@ -53,10 +53,21 @@ const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html',sc
   const sourceTexts=reference.docs.flatMap(d=>[d.method,d.detail]);const words=[...new Set(sourceTexts.join(' ').match(/\b[A-Z]{2,}\b/g)||[])];for(const word of words)assert.ok(reference.glossary.includes(word),`Undefined acronym: ${word}`);
   // Definitions remain reachable while the mode bookmark remains correct.
   await page.getByText('Implementation details and precision',{exact:true}).click();await page.locator('#detailDoc a[href="#lab-glossary"]').first().click();assert.equal(await page.locator('#acronymDoc').evaluate(el=>el.closest('details').open),true);assert.ok(page.url().endsWith('#subtraction'));assert.equal(await page.locator('#detailDoc').evaluate(el=>el.closest('details').open),true);
-  await page.locator('.docs').screenshot({path:path.join(scratch,'wall-subtraction-reference.png')});
-  // Keyboard shortcuts include the new ninth tab; scene identity remains stable.
-  await page.keyboard.press('9');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'events');await page.keyboard.press('2');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'subtraction');
+  await page.locator('#sceneDocs').screenshot({path:path.join(scratch,'wall-subtraction-reference.png')});await page.locator('#generalDocs').screenshot({path:path.join(scratch,'general-reference.png')});
+  // General method links select their real demonstrations, not just a hash.
+  assert.equal(await page.locator('#sceneDocs #methodDoc').count(),1);
+  assert.equal(await page.locator('#sceneDocs #detailDoc').count(),1);
+  assert.equal(await page.locator('#generalDocs #costDoc').count(),1);
+  assert.equal(await page.locator('#generalDocs #workDetailDoc').count(),1);
+  assert.ok(!(await page.locator('#detailDoc').innerText()).includes('What the operation readouts count'));
+  if(!(await page.locator('#costDoc').evaluate(el=>el.closest('details').open)))await page.getByText('Computational effort and which method to choose',{exact:true}).click();
+  await page.locator('#costDoc a[data-scene="metrics"][data-variant="raster"][data-dimension="3d"]').first().click();
+  const linked=await page.evaluate(()=>visibilityLab.getState());assert.equal(linked.scene,'metrics');assert.equal(linked.variant,'raster');assert.equal(linked.dimension,'3d');assert.ok(new URL(page.url()).hash.startsWith('#metrics'));assert.ok(new URL(page.url()).hash.includes('mode=raster'));assert.ok(new URL(page.url()).hash.includes('dimension=3d'));
+  // Eight shortcuts match the exposed tabs; removed Corner events is inert.
+  await page.locator('h1').click();await page.keyboard.press('8');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'cost');
+  await page.keyboard.press('9');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'cost');
+  await page.keyboard.press('2');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'subtraction');
   await page.evaluate(()=>visibilityLab.renderAt('subtraction',8.03/49,{variant:'subtract'}));await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(scratch,'wall-subtraction-4k.png')});
-  assert.deepEqual(errors,[]);console.log('✓ All nine reference sections explain current implementations and acronyms; glossary navigation preserves the tab, and shortcuts cover 1–9.');
+  assert.deepEqual(errors,[]);console.log('✓ Current reference sections explain implementations and acronyms; general links route to methods, glossary navigation preserves the tab, and shortcuts cover 1–8.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
