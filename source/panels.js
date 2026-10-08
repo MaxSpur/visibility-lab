@@ -13,7 +13,7 @@ function drawPanel(s){
   $('explanation').hidden=!s.panel;
   if($('explanationTitle').textContent!==p.title)$('explanationTitle').textContent=p.title||'';
   replaceHTML($('explanationBody'),panelBody(p));
-  const stats=p.stats?.length?'<dl class="stats">'+p.stats.map(([name,value])=>'<dt>'+escapeHTML(name)+'</dt><dd>'+escapeHTML(value)+'</dd>').join('')+'</dl>':'';
+  const stats=p.stats?.length?'<dl class="stats">'+p.stats.map(([name,value,detail])=>'<dt>'+escapeHTML(name)+'</dt><dd'+(detail?' title="'+escapeHTML(detail)+'"':'')+'>'+escapeHTML(value)+'</dd>').join('')+'</dl>':'';
   replaceHTML($('explanationFooter'),stats+'<div class="legend">'+(p.legend||[]).map(([col,t])=>'<span class="legend-item"><span class="swatch" style="--swatch:'+escapeHTML(col)+'" data-svg-box></span><span>'+escapeHTML(t)+'</span></span>').join('')+'</div>'+(p.note?'<p class="panel-note">'+escapeHTML(p.note)+'</p>':''));
 }
 function updateLive(){const p=panelData,text=(p.body||[]).map(t=>'<p>'+escapeHTML(t)+'</p>').join('');const table=p.metrics?'<table><thead><tr><th>Displayed quantity</th><th>Geometry</th><th>Samples</th><th>Difference</th></tr></thead><tbody>'+p.metrics.map(r=>'<tr>'+r.map(v=>'<td>'+escapeHTML(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'';replaceHTML($('liveText'),text+table);}
@@ -26,8 +26,8 @@ function render(overrides={}){
   if(rect.width>0&&rect.height>0)W=H*rect.width/rect.height;
   view.setAttribute('viewBox',`0 0 ${svgNumber(W)} ${H}`);
   ctx.reset();ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);drawPanel(s);}
+  try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost,events:drawEvents}[s.scene])(s);addWorkReadouts(s);drawPanel(s);}
   catch(e){console.error(e);setPanel({title:'This configuration could not be completed',body:[e.message,'Reset the scene or use a coarser terrain mesh.'],legend:[],note:'The calculation stopped; the result is incomplete.'});drawPanel(s);$('status').textContent=e.message;window.lastLabError=e.message;}
   ctx.commit();
-  if(!exporting){syncTransport();updateLive();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}
+  if(!exporting){syncTransport();updateLive();updateWorkReference(s);if(s.scene==='cost')renderBenchmarkTable();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}
 }

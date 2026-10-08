@@ -52,10 +52,10 @@ const url=process.env.LAB_URL||'http://127.0.0.1:8764/visibility-lab-v4.html',sc
   for(const acronym of ['CPU','GPU','CGAL','BVH','LOS','TIN','DEM','JIT','SVG','HTML','IEEE','SIGGRAPH','JASA','SDH','ID','GRASS'])assert.ok(reference.glossary.includes(acronym));
   const sourceTexts=reference.docs.flatMap(d=>[d.method,d.detail]);const words=[...new Set(sourceTexts.join(' ').match(/\b[A-Z]{2,}\b/g)||[])];for(const word of words)assert.ok(reference.glossary.includes(word),`Undefined acronym: ${word}`);
   // Definitions remain reachable while the mode bookmark remains correct.
-  await page.getByText('Implementation details and precision',{exact:true}).click();await page.locator('#detailDoc a[href="#lab-glossary"]').click();assert.equal(await page.locator('#acronymDoc').evaluate(el=>el.closest('details').open),true);assert.ok(page.url().endsWith('#subtraction'));assert.equal(await page.locator('#detailDoc').evaluate(el=>el.closest('details').open),true);
+  await page.getByText('Implementation details and precision',{exact:true}).click();await page.locator('#detailDoc a[href="#lab-glossary"]').first().click();assert.equal(await page.locator('#acronymDoc').evaluate(el=>el.closest('details').open),true);assert.ok(page.url().endsWith('#subtraction'));assert.equal(await page.locator('#detailDoc').evaluate(el=>el.closest('details').open),true);
   await page.locator('.docs').screenshot({path:path.join(scratch,'wall-subtraction-reference.png')});
   // Keyboard shortcuts include the new ninth tab; scene identity remains stable.
-  await page.keyboard.press('9');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'events');await page.keyboard.press('3');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'subtraction');
+  await page.keyboard.press('9');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'events');await page.keyboard.press('2');assert.equal((await page.evaluate(()=>visibilityLab.getState())).scene,'subtraction');
   await page.evaluate(()=>visibilityLab.renderAt('subtraction',8.03/49,{variant:'subtract'}));await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(scratch,'wall-subtraction-4k.png')});
   assert.deepEqual(errors,[]);console.log('✓ All nine reference sections explain current implementations and acronyms; glossary navigation preserves the tab, and shortcuts cover 1–9.');
  }finally{await browser.close();}
