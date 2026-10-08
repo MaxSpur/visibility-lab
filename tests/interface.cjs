@@ -68,7 +68,7 @@ fs.mkdirSync(scratch,{recursive:true});
     assert.equal(await page.locator('#nav button[data-id=events]').count(),0);
     assert.equal(await page.locator('[data-key=variant]').count(),0);
     assert.equal(await page.locator('.transport').isVisible(),false);
-    assert.ok((await page.locator('#controls [data-key]').evaluateAll(xs=>xs.map(x=>x.dataset.key))).every(key=>['benchSource','benchView','timeScale','errorScale','interval','positions','seed'].includes(key)),'Benchmark controls contain only statistical/display settings');
+    assert.ok((await page.locator('#controls [data-key]').evaluateAll(xs=>xs.map(x=>x.dataset.key))).every(key=>['benchSource','benchView','timeScale','errorScale','interval','positions','seed','ribbons','measurements'].includes(key)),'Benchmark controls contain only statistical/display settings');
     assert.equal(await page.locator('#sceneDocs #detailDoc').count(),1);
     assert.equal(await page.locator('#generalDocs #workDetailDoc').count(),1);
     const result=await page.evaluate(()=>visibilityLab.savedBenchmark());

@@ -9,7 +9,7 @@ import json
 ROOT = Path(__file__).resolve().parent
 MODULES = (
     'geometry', 'receiver-boundaries', 'point-location', 'wall-shadow2', 'operation-counts', 'shadow-stages', 'svg-context', 'svg-world', 'reference-notes', 'wall-shadow-docs',
-    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'sample-comparison', 'benchmark-suite', 'benchmark-detail-suite', 'benchmark-data', 'benchmark-controller', 'benchmark-views', 'benchmark-detail-views', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
+    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'terrain-raster', 'sample-comparison', 'benchmark-suite', 'benchmark-detail-suite', 'ray-query', 'ray-reconstruction', 'benchmark-extension-suite', 'benchmark-data', 'benchmark-controller', 'benchmark-views', 'benchmark-detail-views', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
 )
 
 BENCHMARK_MODULES = ('geometry', 'operation-counts', 'wall-shadow2', 'sample-comparison', 'benchmark-suite')
@@ -25,11 +25,13 @@ def build():
     ):
         data = base64.b64encode((ROOT / 'assets/brand' / filename).read_bytes()).decode('ascii')
         template = template.replace(f'/*BRAND_{key}*/', f'data:{mime};base64,{data}')
-    worker_sources = [(name, (ROOT / f'source/{name}.js').read_text()) for name in BENCHMARK_MODULES]
+    worker_sources = [(name, (ROOT / f"source/{'benchmark-sample-baseline' if name == 'sample-comparison' else name}.js").read_text()) for name in BENCHMARK_MODULES]
     fingerprint = hashlib.sha256('\0'.join(name + '\0' + source for name, source in worker_sources).encode()).hexdigest()
     detail_source = (ROOT / 'source/benchmark-detail-suite.js').read_text()
     detail_fingerprint = hashlib.sha256(('benchmark-detail-suite\0' + detail_source).encode()).hexdigest()
-    worker = '\n\n'.join(source for _, source in worker_sources) + '\n' + detail_source + '\n' + (ROOT / 'source/benchmark-worker.js').read_text()
+    extension_sources = [(name, (ROOT / f'source/{name}.js').read_text()) for name in ('benchmark-detail-suite', 'terrain-raster', 'ray-query', 'ray-reconstruction', 'benchmark-extension-suite')]
+    extension_fingerprint = hashlib.sha256('\0'.join(name + '\0' + source for name, source in extension_sources).encode()).hexdigest()
+    worker = '\n\n'.join(source for _, source in worker_sources) + '\n' + '\n'.join(source for _, source in extension_sources) + '\n' + (ROOT / 'source/benchmark-worker.js').read_text()
     data_path = ROOT / 'assets/benchmarks/statistics.json'
     data = json.loads(data_path.read_text()) if data_path.exists() else None
     if data and data.get('metadata', {}).get('sourceFingerprint') != fingerprint:
@@ -42,6 +44,21 @@ def build():
         f'/* Module: {name} */\n' + (ROOT / f'source/{name}.js').read_text()
         for name in MODULES
     )
+    cloud_path = ROOT / 'assets/benchmarks/measurement-clouds.json'
+    cloud_data = json.loads(cloud_path.read_text()) if cloud_path.exists() else None
+    for cloud in (cloud_data or {}).get('datasets', {}).values():
+        asset = ROOT / 'assets/benchmarks' / cloud['metadata']['statisticsAsset']
+        if hashlib.sha256(asset.read_bytes()).hexdigest() != cloud['metadata']['statisticsSHA256']:
+            raise ValueError('Individual measurement cloud does not match its preserved statistics asset.')
+    extension_data = [json.loads(p.read_text()) for p in sorted((ROOT / 'assets/benchmarks').glob('replacement-*.json'))]
+    archive_data = [json.loads(p.read_text()) for p in sorted((ROOT / 'assets/benchmarks/archive').glob('*.json'))]
+    for addition in extension_data:
+        if addition['metadata']['sourceFingerprint'] != fingerprint or addition['metadata']['extensionFingerprint'] != extension_fingerprint:
+            raise ValueError('Selective extension statistics do not match their preserved sources.')
+    scripts = scripts.replace('/*BENCHMARK_CLOUD_DATA*/null', json.dumps(cloud_data, separators=(',', ':')))
+    scripts = scripts.replace('/*BENCHMARK_ARCHIVE_DATA*/[]', json.dumps(archive_data, separators=(',', ':')))
+    scripts = scripts.replace('/*BENCHMARK_EXTENSION_DATA*/[]', json.dumps(extension_data, separators=(',', ':')))
+    scripts = scripts.replace('/*BENCHMARK_EXTENSION_FINGERPRINT*/\"\"', json.dumps(extension_fingerprint))
     scripts = scripts.replace('/*BENCHMARK_DATA*/null', json.dumps(data, separators=(',', ':')))
     scripts = scripts.replace('/*TERRAIN_BENCHMARK_DATA*/null', json.dumps(detail_data, separators=(',', ':')))
     scripts = scripts.replace('/*BENCHMARK_WORKER*/""', json.dumps(worker))

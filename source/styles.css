@@ -80,8 +80,11 @@ h1 { margin:0; font-size:1.25rem; font-weight:700; line-height:1.25; white-space
 .metric-group h3 { font-size:.88rem; margin:0 0 .2rem; font-weight:650; }
 .metric-values { font-size:1.15rem; }
 .geometric { color:var(--teal); }
-.sampled { color:var(--orange); }
+.sampled { color:var(--sample-color,var(--orange)); }
 #explanationBody .difference { font-size:.78rem; margin:.15rem 0 0; color:var(--muted); }
+.sampling-page #explanationBody>p { margin-bottom:.6rem; }
+.sampling-page .panel-metrics { margin-bottom:.55rem; }
+.sampling-page .stats { margin-bottom:.8rem; }
 .transport { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
 .transport>input[type=range] { flex:1 1 12rem; }
 .transport output { width:3.3rem; text-align:right; font-size:.9rem; font-variant-numeric:tabular-nums; }
@@ -180,3 +183,11 @@ kbd { font:inherit; border:1px solid var(--line); padding:0 .2rem; }
   #presentation { padding:0; height:100vh; min-height:0; display:block; }
   #stage { height:100%; border:0; }
 }
+
+/* Benchmarks and demonstrations share family hues and compact square controls. */
+.benchmark-toggle{display:flex;align-items:center;gap:.3rem;font-size:.8rem;white-space:nowrap;padding:.25rem 0;}
+.benchmark-toggle input{accent-color:#3250a6;}
+#nav [data-id="shadows"]{--tab-hue:#167b82}#nav [data-id="subtraction"]{--tab-hue:#7760b5}#nav [data-id="expansion"]{--tab-hue:#2e78b7}#nav [data-id="air"]{--tab-hue:#3250a6}#nav [data-id="terrain"]{--tab-hue:#188d86}#nav [data-id="projection"]{--tab-hue:#6b55b5}#nav [data-id="metrics"]{--tab-hue:#bc235a}#nav [data-id="cost"]{--tab-hue:#253744}
+#nav button{color:var(--tab-hue,#253744);border-bottom:2px solid var(--tab-hue,#253744)}
+#nav button[aria-selected="true"]{background:var(--tab-hue,#253744);color:#fff;border-color:var(--tab-hue,#253744)}
+#nav [data-id="metrics"]{border-left:3px solid #188d86;border-right:3px solid #bc235a}

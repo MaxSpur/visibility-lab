@@ -15,7 +15,9 @@ function worldSVG(cam,faces,lines=[]){
   let color=rgb(f.color||C.wall,f.alpha??1),alpha=f.alpha??color[3]??1;if(f.shade!==false){const lum=.84+.16*Math.abs(dot(normal3(f.poly),unit([-.3,-.5,1])));color=color.map((v,i)=>i<3?v*lum:v);}const fill='rgb('+color.slice(0,3).map(v=>number(clamp(v,0,1)*255)).join(',')+')';
   return {f,index,footprint,plane,bounds:bounds(footprint),alpha:clamp(alpha,0,1),fill,depth:cam.depth(centroid(f.poly))};
  }
- const projected=faces.map(projectFace).filter(Boolean),opaque=projected.filter(f=>f.alpha>=.999),transparent=projected.filter(f=>f.alpha<.999).sort((a,b)=>a.depth-b.depth||a.index-b.index),bin=Math.max(20,Math.min(96,Math.sqrt(rect.w*rect.h/Math.max(1,opaque.length))*2)),hash=new Map();
+ // Draped comparison textures can request a stable paint layer. Otherwise
+ // transparent construction faces retain their physical far-to-near order.
+ const projected=faces.map(projectFace).filter(Boolean),opaque=projected.filter(f=>f.alpha>=.999&&!f.f.loops),transparent=projected.filter(f=>f.alpha<.999||f.f.loops).sort((a,b)=>(a.f.paintLayer||0)-(b.f.paintLayer||0)||a.depth-b.depth||a.index-b.index),bin=Math.max(20,Math.min(96,Math.sqrt(rect.w*rect.h/Math.max(1,opaque.length))*2)),hash=new Map();
  function keys(box,visit){const x0=Math.max(0,Math.floor((box[0]-rect.x)/bin)),x1=Math.min(Math.floor(rect.w/bin),Math.floor((box[2]-rect.x)/bin)),y0=Math.max(0,Math.floor((box[1]-rect.y)/bin)),y1=Math.min(Math.floor(rect.h/bin),Math.floor((box[3]-rect.y)/bin));for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)visit(x+','+y);}
  for(const f of opaque)keys(f.bounds,key=>{if(!hash.has(key))hash.set(key,[]);hash.get(key).push(f);});
  function candidates(box){const found=new Set();keys(box,key=>{for(const f of hash.get(key)||[])found.add(f);});return [...found].filter(f=>overlaps(box,f.bounds));}
@@ -26,7 +28,13 @@ function worldSVG(cam,faces,lines=[]){
    let cut=intersect(target.footprint,blocker.footprint);cut=half(cut,delta);if(cut.length<3||Math.abs(signed(cut))<1e-8)continue;
    pieces=pieces.flatMap(p=>difference(p,cut));if(!pieces.length)break;
   }
-  for(const p of pieces){if(!p.flat().every(Number.isFinite))continue;output.push('<polygon data-world-face="'+target.index+'" points="'+p.map(v=>v.map(number).join(',')).join(' ')+'" fill="'+escape(target.fill)+'"'+(target.alpha<1?' fill-opacity="'+number(target.alpha)+'"':'')+'/>');faceFragments++;}
+  if(target.f.loops){
+   // A texture's rings lie on this original convex face. Clip that face once
+   // against opaque terrain, then mask the complete compound texture path.
+   // Holes stay holes; the display does not invent triangles between samples.
+   const path=polys=>polys.map(p=>'M'+p.map(v=>v.map(number).join(',')).join('L')+'Z').join(''),loops=target.f.loops.filter(p=>p.length>=3&&p.flat().every(Number.isFinite)).map(p=>p.map(cam.p));
+   if(pieces.length&&loops.length){const mask=id+'-texture-'+target.index;output.push('<defs><clipPath id="'+mask+'"><path d="'+path(pieces)+'"/></clipPath></defs><path data-world-face="'+target.index+'" data-world-compound="true" d="'+path(loops)+'" fill-rule="evenodd" clip-path="url(#'+mask+')" fill="'+escape(target.fill)+'"'+(target.alpha<1?' fill-opacity="'+number(target.alpha)+'"':'')+'/>');faceFragments++;}
+  }else for(const p of pieces){if(!p.flat().every(Number.isFinite))continue;output.push('<polygon data-world-face="'+target.index+'" points="'+p.map(v=>v.map(number).join(',')).join(' ')+'" fill="'+escape(target.fill)+'"'+(target.alpha<1?' fill-opacity="'+number(target.alpha)+'"':'')+'/>');faceFragments++;}
  }
  function restricted(interval,a,b,f){let [lo,hi]=interval;const da=f(a),db=f(b);if(da>=0&&db>=0)return [lo,hi];if(da<0&&db<0)return null;const t=da/(da-db);if(da<0)lo=Math.max(lo,t);else hi=Math.min(hi,t);return hi>lo+1e-12?[lo,hi]:null;}
  lines.forEach((l,index)=>{if(!l.a||!l.b||![...l.a,...l.b].every(Number.isFinite))return;const a=cam.p(l.a),b=cam.p(l.b);if(![...a,...b].every(Number.isFinite)||Math.hypot(b[0]-a[0],b[1]-a[1])<1e-9)return;const za=cam.depth(l.a)+.066,zb=cam.depth(l.b)+.066;let visible=[[0,1]],lineBounds=bounds([a,b]);

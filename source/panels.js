@@ -10,6 +10,7 @@ function panelBody(p){
 function placeDemonstrationControl(showPanel){const control=document.querySelector('.demonstration-setting');if(!control)return;const target=showPanel?$('demonstrationControls'):$('controls');if(control.parentElement!==target){if(showPanel)target.append(control);else target.prepend(control);}}
 function drawPanel(s){
   const p=panelData;
+  $('explanation').style.setProperty('--sample-color',p.sampleColor||C.orange);
   $('explanation').hidden=!s.panel;
   if($('explanationTitle').textContent!==p.title)$('explanationTitle').textContent=p.title||'';
   replaceHTML($('explanationBody'),panelBody(p));
@@ -19,7 +20,7 @@ function drawPanel(s){
 function updateLive(){const p=panelData,text=(p.body||[]).map(t=>'<p>'+escapeHTML(t)+'</p>').join('');const table=p.metrics?'<table><thead><tr><th>Displayed quantity</th><th>Geometry</th><th>Samples</th><th>Difference</th></tr></thead><tbody>'+p.metrics.map(r=>'<tr>'+r.map(v=>'<td>'+escapeHTML(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>':'';replaceHTML($('liveText'),text+table);}
 function render(overrides={}){
   window.lastLabError=null;
-  const s={...state,...overrides};if(s.scene==='cost')s.panel=false;hitTargets=[];panelData={};$('presentation').classList.toggle('benchmark-page',s.scene==='cost');
+  const s={...state,...overrides};if(s.scene==='cost')s.panel=false;hitTargets=[];panelData={};$('presentation').classList.toggle('benchmark-page',s.scene==='cost');$('presentation').classList.toggle('sampling-page',s.scene==='metrics');
   $('explanation').hidden=!s.panel;
   placeDemonstrationControl(s.panel);
   const rect=view.getBoundingClientRect();

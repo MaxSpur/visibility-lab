@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const root=__dirname+'/../source/';
 globalThis.writeBenchmarkFixture=(path,data)=>fs.writeFileSync(path,data);
-vm.runInThisContext(['geometry','operation-counts','wall-shadow2','shadow-stages','sample-comparison','projection-views','benchmark-suite'].map(n=>fs.readFileSync(root+n+'.js','utf8')).join('\n')+String.raw`
+vm.runInThisContext(['geometry','operation-counts','wall-shadow2','shadow-stages','sample-comparison','projection-views','benchmark-suite'].map(n=>fs.readFileSync(root+(n==='sample-comparison'?'benchmark-sample-baseline':n)+'.js','utf8')).join('\n')+String.raw`
 (async()=>{
  const check=(x,m)=>{if(!x)throw Error(m);};
  const sets=createBenchmarkWorkloads();check(sets.plans.length===3&&sets.terrains.length===3,'Every demonstrated geometry');for(const p of sets.plans){check(p.observers.length===25,'Twenty-five valid seeded observers');check(p.observers.every(q=>benchmarkValidPlan(q,p.scene)),'Observer outside solids');}for(const t of sets.terrains)check(t.observers.every(q=>Math.abs(q[2]-terrainHeight(q[0],q[1],t.base.tris)-8)<1e-8),'Observer ground clearance');

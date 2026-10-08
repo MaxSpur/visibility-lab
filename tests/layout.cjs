@@ -37,10 +37,10 @@ fs.mkdirSync(OUT,{recursive:true});
   for(const phase of [0,.35,.65,1])for(const panel of [true,false])cases.push({scene:'shadows',variant:'construct',phase,panel,construction:false});
   // Dense controls are layout-sensitive; solver budgets are low because this
   // test checks DOM layout, with numerical/high-density gates tested elsewhere.
-  for(const variant of ['raycast','raster'])for(const panel of [true,false])cases.push({scene:'metrics',variant,phase:.5,panel,dimension:'3d',shadowEnvelope:true,sampleWire:true});
+  for(const variant of ['raycast','raster'])for(const panel of [true,false])cases.push({scene:'metrics',variant,phase:.04,panel,dimension:'3d',shadowEnvelope:true,sampleWire:true,rayDisplay:'none'});
   for(const dimension of ['2d','3d'])cases.push({scene:'cost',variant:'bench',phase:.5,panel:true,dimension});
   for(const method of ['raycast','raster'])for(const phase of [0,.5,1])cases.push({scene:'metrics',variant:method,dimension:'2d',metric:'walls',phase,panel:true});
-  cases.push({scene:'metrics',variant:'raycast',phase:.5,panel:true,dimension:'3d',stressControls:true});
+  cases.push({scene:'metrics',variant:'raycast',phase:.04,panel:true,dimension:'3d',stressControls:true,rayDisplay:'none'});
   let frames=0;const panelTops=[];
   for(const settings of cases){
    await page.evaluate(s=>visibilityLab.setState(s),{...defaults,...settings});

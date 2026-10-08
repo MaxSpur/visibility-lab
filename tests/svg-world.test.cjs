@@ -22,6 +22,12 @@ svg=worldSVG(cam,[blocker],[{a:[0,5,2],b:[10,5,2]}]);assert.equal(lineSegments(s
 svg=worldSVG(cam,[face(()=>0,'#ff0000',.4),blocker]);assert.equal(drawnArea(svg,0),60,'Transparent face must not leak through opaque blocker');
 svg=worldSVG(cam,[face(()=>1,'#ff0000',.4),face(()=>1,'#0000ff')]);assert.equal(drawnArea(svg,0),100,'Transparent coplanar layer passes baseline LEQUAL depth test');
 svg=worldSVG(cam,[face(()=>3,'#ff0000',.4),face(()=>1,'#00ff00',.4)]);assert.deepEqual(polygons(svg).map(p=>p.index),[1,0],'Transparent far-to-near ordering');
+svg=worldSVG(cam,[{...face(()=>3,'#00ff00',.4),paintLayer:1},{...face(()=>1,'#ff0000',.4),paintLayer:2},blocker]);assert.deepEqual([...new Set(polygons(svg).map(p=>p.index))],[2,0,1],'Comparison paint order is stable across fragment centroids');assert.equal(drawnArea(svg,1),60,'Paint layers still respect opaque terrain depth');
+// Compound textures preserve rings/holes and are masked by the visible part
+// of their original face. Their full support face must not occlude context.
+const texture={...face(()=>0,'#ff0000',1),loops:[[[0,0,0],[10,0,0],[10,10,0],[0,10,0]],[[1,1,0],[2,1,0],[2,2,0],[1,2,0]]]};
+svg=worldSVG(cam,[blocker,texture]);assert.equal(worldSVG.lastStats.opaqueFaces,1,'A texture ring is not an opaque support polygon');assert.equal((svg.match(/data-world-compound="true"/g)||[]).length,1);assert.ok(svg.includes('fill-rule="evenodd"'));assert.ok(svg.includes('-texture-1'));assert.equal(drawnArea(svg,0),40,'Compound texture does not erase opaque context');
+const mask=svg.match(/<clipPath id="[^"]+-texture-1"><path d="([^"]+)"\/>/)[1],maskPolys=mask.match(/M[^Z]+Z/g).map(s=>s.slice(1,-1).split('L').map(p=>p.split(',').map(Number)));assert.ok(Math.abs(maskPolys.reduce((n,p)=>n+area(p),0)-60)<1e-5,'Opaque clipping is shared by the full compound path');
 const offscreen={poly:[[-20,-20,1],[20,-20,1],[20,20,1],[-20,20,1]],shade:false};svg=worldSVG(cam,[offscreen]);assert.equal(drawnArea(svg,0),100);assert(polygons(svg)[0].poly.every(p=>p.every(v=>v>=0&&v<=10)));assert(svg.includes('<clipPath'));assert(!/<image|<canvas|NaN|Infinity/.test(svg));
 const next=worldSVG(cam,[offscreen]);assert.notEqual(svg.match(/id="([^"]+)"/)[1],next.match(/id="([^"]+)"/)[1]);
 svg=worldSVG(cam,[{poly:[[0,0,0],[1,1,1],[2,2,2]]},{poly:[[NaN,0,1],[1,1,1],[2,1,1]]}]);assert.equal(polygons(svg).length,0,'Degenerate/nonfinite polygons must be omitted');
