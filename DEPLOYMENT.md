@@ -16,9 +16,13 @@ The public single-file route is
 <https://www.maximspur.com/visibility-lab.html>. This root-level file belongs in
 the account repository `MaxSpur/maxspur.github.io`, rather than in the project
 Pages artifact. Follow the account-copy process below as part of a release.
-The requested address <https://maximspur.com/visibility-lab.html> additionally
-depends on Cloudflare's apex routing. DNS records cannot route individual paths;
-preserve existing routing for the homepage and other projects.
+The requested address <https://maximspur.com/visibility-lab.html> uses the
+Cloudflare Single Redirect named `Geometric Visibility Lab — apex HTML route`:
+`http.host eq "maximspur.com" and http.request.uri.path eq "/visibility-lab.html"`
+redirects permanently to the `www` URL, preserving query strings. Browser
+fragments survive the redirect. The address bar therefore uses `www` after
+navigation. DNS records cannot route individual paths; preserve existing routing
+for the homepage and other projects.
 
 Finish concurrent content/benchmark work before rebuilding or making a release.
 Run from this directory:
