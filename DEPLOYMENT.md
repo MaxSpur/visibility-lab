@@ -21,12 +21,16 @@ The public single-file route is
 the account repository `MaxSpur/maxspur.github.io`, rather than in the project
 Pages artifact. Follow the account-copy process below as part of a release.
 The requested address <https://maximspur.com/visibility-lab.html> uses the
-Cloudflare Single Redirect named `Geometric Visibility Lab — apex HTML route`:
-`http.host eq "maximspur.com" and http.request.uri.path eq "/visibility-lab.html"`
-redirects permanently to the `www` URL, preserving query strings. Browser
-fragments survive the redirect. The address bar therefore uses `www` after
-navigation. DNS records cannot route individual paths; preserve existing routing
-for the homepage and other projects.
+Cloudflare Single Redirect named `Geometric Visibility Lab — canonical URL`.
+It redirects the bare-domain `/visibility-lab.html` and the legacy paths
+`/visibility-lab`, `/visibility-lab/`, `/visibility-lab/index.html`, and
+`/visibility-lab/visibility-lab-v4.html` on either hostname permanently to the
+`www` root HTML URL, preserving query strings. Browser fragments survive the
+redirect. Do not include the canonical `www` root HTML URL in the match, which
+would create a redirect loop. The address bar uses `www` after navigation.
+DNS records cannot route individual paths; preserve existing routing for the
+homepage and other projects. Keep the redirect-only project artifact as a
+fallback as well, so retiring the Cloudflare rule cannot revive stale content.
 
 Finish concurrent content/benchmark work before rebuilding or making a release.
 Run from this directory:
