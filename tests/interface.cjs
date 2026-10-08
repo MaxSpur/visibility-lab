@@ -68,32 +68,21 @@ fs.mkdirSync(scratch,{recursive:true});
     assert.equal(await page.locator('#nav button[data-id=events]').count(),0);
     assert.equal(await page.locator('[data-key=variant]').count(),0);
     assert.equal(await page.locator('.transport').isVisible(),false);
-    assert.equal(await page.locator('#controls [data-key]').count(),0);
+    assert.ok((await page.locator('#controls [data-key]').evaluateAll(xs=>xs.map(x=>x.dataset.key))).every(key=>['benchSource','benchView','timeScale','errorScale','interval','positions','seed'].includes(key)),'Benchmark controls contain only statistical/display settings');
     assert.equal(await page.locator('#sceneDocs #detailDoc').count(),1);
     assert.equal(await page.locator('#generalDocs #workDetailDoc').count(),1);
-    await page.getByRole('button',{name:'Run benchmarks',exact:true}).click();
-    await page.waitForFunction(()=>visibilityLab.benchmark()?.rows?.length&&!benchmarkBusy,{},{timeout:240000});
-    const result=await page.evaluate(()=>visibilityLab.benchmark());
-    assert.equal(result.protocol.planCases,18);assert.equal(result.protocol.terrainCases,18);assert.equal(result.protocol.urbanCases,6);
-    assert.equal(result.protocol.repeats,3);assert.equal(result.protocol.warmups,1);
-    assert.equal(result.protocol.batching.targetMs,5);assert.equal(result.protocol.batching.maxBatch,4096);
-    for(const record of result.cases){
-      assert.ok(Number.isInteger(record.queryBatchSize)&&record.queryBatchSize>=1&&record.queryBatchSize<=4096,record.methodId);
-      assert.equal(record.queryRuns.length,3);assert.equal(record.queryBatchElapsedMs.length,3);
-      record.queryRuns.forEach((value,i)=>assert.equal(value,record.queryBatchElapsedMs[i]/record.queryBatchSize));
-      if(record.recoveryBatchSize){assert.ok(Number.isInteger(record.recoveryBatchSize)&&record.recoveryBatchSize<=4096);assert.equal(record.recoveryRuns.length,3);assert.equal(record.recoveryBatchElapsedMs.length,3);record.recoveryRuns.forEach((value,i)=>assert.equal(value,record.recoveryBatchElapsedMs[i]/record.recoveryBatchSize));}
-      else{assert.equal(record.recoveryBatchSize,0);assert.deepEqual(record.recoveryRuns,[]);assert.deepEqual(record.recoveryBatchElapsedMs,[]);}
-    }
-    assert.ok(result.rows.every(row=>row.query>0),'Every measured query median is positive after timer normalization');
-    for(const methodId of ['expand2','wall2','ray2-linear','ray2-indexed','raster2','shadow3','beam3','ray3-linear','ray3-indexed','raster3','viewport3','urban3'])assert.ok(result.rows.some(r=>r.methodId===methodId),methodId);
-    assert.ok(result.cases.every(r=>Number.isFinite(r.query)&&Number.isFinite(r.total)&&(r.error===null||Number.isFinite(r.error))));
-    assert.ok(result.rows.every(r=>r.stats.total.q1<=r.stats.total.median&&r.stats.total.median<=r.stats.total.q3));
-    assert.ok(await page.locator('#view text').count()>20,'Benchmark graph has accessible vector labels');
+    const result=await page.evaluate(()=>visibilityLab.savedBenchmark());
+    assert.ok(result?.rows?.length,'Saved benchmark graphs are available immediately');
+    assert.ok(result.rows.every(row=>row.stats.total.n>=25),'Saved statistics include at least 25 observers per method');
+    assert.equal(await page.locator('[data-key=benchSource]').inputValue(),'saved');
+    assert.equal(await page.locator('[data-key=benchView]').inputValue(),'xy');
+    assert.equal(await page.locator('[data-key=positions]').inputValue(),'25');
     assert.equal(await page.locator('.transport').isVisible(),false);
-    fs.writeFileSync(path.join(scratch,'benchmarks-measured.json'),JSON.stringify(result,null,2));
-    for(const [width,height] of [[3840,2160],[1920,1080]]){await page.setViewportSize({width,height});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(scratch,`benchmarks-measured-${width}.png`)});}
+    assert.ok(await page.locator('#view text').count()>20,'Saved benchmark graph has accessible vector labels');
+    assert.ok(!result.cases&&!result.rows.some(row=>row.samples),'Saved dataset contains compact statistics, not raw cases');
+    for(const [width,height] of [[3840,2160],[1920,1080]]){await page.setViewportSize({width,height});await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:path.join(scratch,`benchmarks-saved-${width}.png`)});}
     await page.locator('#nav button[data-id=expansion]').click();await page.locator('#tests').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Passed:'),{},{timeout:120000});
-    console.log('✓ Graph-only fixed benchmarks cover every method, paired observer cases and spatial quartiles; independent geometry checks still run.');
+    console.log('✓ Saved offline benchmark graphs are immediately available; independent geometry checks still run.');
 
     assert.deepEqual(errors,[]);assert.deepEqual(remote,[]);
     await page.setViewportSize({width:3840,height:2160});await page.evaluate(()=>visibilityLab.renderAt('projection',.65,{panel:true}));await page.screenshot({path:path.join(scratch,'v4-4k.png')});

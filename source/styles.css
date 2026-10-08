@@ -123,6 +123,14 @@ h1 { margin:0; font-size:1.25rem; font-weight:700; line-height:1.25; white-space
 .benchmark-page #controls { align-items:center; }
 .benchmark-page #view a { cursor:pointer; }
 .benchmark-page #view a text { cursor:pointer; }
+.benchmark-page #controls { gap:.4rem .55rem; }
+.benchmark-page .benchmark-setting { flex:1 1 auto; min-width:0; max-width:none; }
+.benchmark-page .benchmark-number { flex:0 1 auto; }
+.benchmark-page .benchmark-number input { width:100%; font-size:.88rem; }
+.benchmark-page #view [data-benchmark-point],.benchmark-page #view [data-benchmark-series],.benchmark-page #view [data-benchmark-series] text { cursor:pointer; }
+.benchmark-page #view [data-benchmark-point]:focus-visible { outline:none; filter:drop-shadow(0 0 4px var(--orange)); }
+.benchmark-run-progress { flex:1 0 100%; display:flex; gap:.7rem; align-items:center; font-size:.76rem; }
+.benchmark-run-progress progress { width:10rem; height:.7rem; accent-color:var(--teal); }
 .docs h2 { font-size:1.35rem; margin:0 0 .7rem; }
 .docs h3 { font-size:1.05rem; margin:1.1rem 0 .4rem; }
 .docs p { margin:.6rem 0; max-width:115ch; }

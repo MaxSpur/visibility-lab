@@ -1,0 +1,12 @@
+/* Complexity extension kept separate from the frozen baseline statistics.
+ * All mesh levels use the same seeded physical XY positions; height is the
+ * interpolated surface at that mesh level plus the same 8 m observer height. */
+const TERRAIN_DETAIL_LEVELS=[{density:'detail48',nx:6,ny:4,triangles:48},{density:'detail192',nx:12,ny:8,triangles:192},{density:'detail432',nx:18,ny:12,triangles:432},{density:'detail768',nx:24,ny:16,triangles:768}];
+function createTerrainDetailWorkloads({positions=25,seed=20261008,levels=TERRAIN_DETAIL_LEVELS}={}){
+ if(!Number.isInteger(positions)||positions<1||positions>1000)throw Error('Observer positions must be an integer from 1 to 1000');const xy=benchmarkUniformPoints(positions,benchmarkSeed(seed,'terrain-detail'),{lo:[1,1],hi:[99,69]},()=>true);
+ const terrains=levels.map(level=>{const base=inputTerrain(level.nx,level.ny);return {...level,name:`${base.tris.length} triangles · ${level.nx} × ${level.ny} terrain`,base,observers:xy.map(q=>[...q,terrainHeight(...q,base.tris)+8])};});return {plans:[],terrains,urban:[],seed,positions,xy};
+}
+async function buildTerrainDetailSuite({positions=25,seed=20261008,levels=TERRAIN_DETAIL_LEVELS,resolutions3=[8,16,32],...options}={}){
+ const workloads=createTerrainDetailWorkloads({positions,seed,levels}),result=await buildBenchmarkSuite({...options,positions,seed,resolutions3,workloads});result.protocol.urbanGeometries=0;result.protocol.geometryPositions=result.protocol.geometryPositions.filter(p=>p.requested);result.protocol.extension='Terrain detail: paired physical XY across mesh levels; independent from baseline scene statistics';result.protocol.levels=levels.map(level=>({...level}));result.protocol.pairedXYSeedLabel='terrain-detail';result.metadata.extension='terrain-detail';return result;
+}
+function compactTerrainDetailStatistics(suite,metadata={}){const compact=compactBenchmarkStatistics(suite,metadata);compact.format='visibility-terrain-detail-statistics';for(const group of compact.geometrySummaries){const cases=suite.cases.filter(c=>c.domain===group.domain&&c.fixture.geometry===group.geometry),rows=aggregateBenchmarkCases(cases,{confidence:true,seed:suite.protocol.seed,replicates:suite.protocol.confidence.replicates});group.rows=rows.map(({samples,...row})=>row);group.triangles=cases[0]?.fixture.triangles;group.density=cases[0]?.fixture.density;}compact.metadata.pooledRows='Rows aggregate levels for completeness; geometrySummaries carry the per-detail comparisons and confidence intervals.';return compact;}

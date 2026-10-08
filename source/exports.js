@@ -44,6 +44,7 @@ function svgForExport(mode=state.exportMode){
   finally{render();}
 }
 async function saveGraphic(format){
+  if(!exporting&&benchmarkBusy&&state.scene==='cost'&&format==='svg'){download(new Blob([graphicSVG()],{type:'image/svg+xml;charset=utf-8'}),'cost-benchmarks-partial.svg');return;}
   if(exporting||benchmarkBusy)return;
   stopPlaying();exporting=true;lockControls(true);
   try{
@@ -60,5 +61,5 @@ async function saveGraphic(format){
     }
     $('status').textContent=`Saved ${format.toUpperCase()} · ${state.exportMode==='panel'?'graphic and explanation':'graphics only'}.`;
   }catch(e){$('status').textContent='Export failed: '+e.message;console.error(e);}
-  finally{exporting=false;lockControls(false);render();}
+  finally{exporting=false;lockControls(false);if(state.scene==='cost'){buildControls();updateBenchmarkProgress();}render();}
 }
