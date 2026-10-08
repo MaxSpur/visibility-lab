@@ -22,7 +22,7 @@ fs.mkdirSync(OUT,{recursive:true});
    const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,centerY:r.y+r.height/2};};
    return{images:images.map(i=>({alt:i.alt,loaded:i.complete&&i.naturalWidth>0,rect:rect(i),href:i.closest('a').href})),title:document.querySelector('h1').textContent,author:{text:document.querySelector('.author-link').textContent,href:document.querySelector('.author-link').href,rect:rect(document.querySelector('.author-link'))},header:rect(document.querySelector('.lab-header'))};
   });
-  assert.deepEqual(branding.images.map(i=>i.alt),['Geovis','LASTIG','IGN','Géodata Paris','Université Gustave Eiffel']);
+  assert.deepEqual(branding.images.map(i=>i.alt),['Geovis Team','UMR LaSTIG','Institut national de l’information géographique et forestière','Géodata Paris','Université Gustave Eiffel']);
   assert.deepEqual(branding.images.map(i=>i.href),['https://www.umr-lastig.fr/geovis/','https://www.umr-lastig.fr/','https://www.ign.fr/','https://geodata-paris.fr/','https://www.univ-gustave-eiffel.fr/']);
   assert.equal(branding.title,'Geometric Visibility Lab');
   assert.equal(branding.author.text,'MAXIM SPUR');

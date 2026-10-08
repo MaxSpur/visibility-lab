@@ -9,7 +9,7 @@ import json
 ROOT = Path(__file__).resolve().parent
 MODULES = (
     'geometry', 'receiver-boundaries', 'point-location', 'wall-shadow2', 'operation-counts', 'shadow-stages', 'svg-context', 'svg-world', 'reference-notes', 'wall-shadow-docs',
-    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'terrain-raster', 'sample-comparison', 'benchmark-suite', 'benchmark-detail-suite', 'ray-query', 'ray-reconstruction', 'benchmark-extension-suite', 'benchmark-data', 'benchmark-controller', 'benchmark-views', 'benchmark-detail-views', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
+    'scenes', 'urban-shadow-stages', 'terrain-views', 'terrain-shadow-stages', 'projection-views', 'terrain-raster', 'sample-comparison', 'benchmark-suite', 'benchmark-detail-suite', 'ray-query', 'ray-reconstruction', 'benchmark-extension-suite', 'benchmark-data', 'benchmark-run-settings', 'benchmark-controller', 'benchmark-views', 'benchmark-detail-views', 'benchmark-inspection', 'wall-shadows', 'shared-scenes', 'work-readouts', 'panels', 'controls', 'exports', 'runtime',
 )
 
 BENCHMARK_MODULES = ('geometry', 'operation-counts', 'wall-shadow2', 'sample-comparison', 'benchmark-suite')
@@ -31,7 +31,7 @@ def build():
     detail_fingerprint = hashlib.sha256(('benchmark-detail-suite\0' + detail_source).encode()).hexdigest()
     extension_sources = [(name, (ROOT / f'source/{name}.js').read_text()) for name in ('benchmark-detail-suite', 'terrain-raster', 'ray-query', 'ray-reconstruction', 'benchmark-extension-suite')]
     extension_fingerprint = hashlib.sha256('\0'.join(name + '\0' + source for name, source in extension_sources).encode()).hexdigest()
-    worker = '\n\n'.join(source for _, source in worker_sources) + '\n' + '\n'.join(source for _, source in extension_sources) + '\n' + (ROOT / 'source/benchmark-worker.js').read_text()
+    worker = '\n\n'.join(source for _, source in worker_sources) + '\n' + '\n'.join(source for _, source in extension_sources) + '\n' + (ROOT / 'source/benchmark-run-settings.js').read_text() + '\n' + (ROOT / 'source/benchmark-worker.js').read_text()
     data_path = ROOT / 'assets/benchmarks/statistics.json'
     data = json.loads(data_path.read_text()) if data_path.exists() else None
     if data and data.get('metadata', {}).get('sourceFingerprint') != fingerprint:

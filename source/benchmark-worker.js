@@ -6,7 +6,7 @@ self.onmessage=async({data})=>{
  if(data.type!=='run')return;
  benchmarkWorkerCancelled=false;
  try{
-  const detail=data.options.suite==='detail',selective=data.options.selective,solve=selective?buildBenchmarkExtension:buildCurrentBenchmarkSuite,result=await solve({...data.options,environment:data.environment,sourceFingerprint:data.sourceFingerprint,extensionFingerprint:data.extensionFingerprint,
+  const detail=data.options.suite==='detail',selective=data.options.selective,solve=data.options.runPreset||data.options.runSettings?runConfiguredBenchmarkSuite:selective?buildBenchmarkExtension:buildCurrentBenchmarkSuite,result=await solve({...data.options,environment:data.environment,sourceFingerprint:data.sourceFingerprint,extensionFingerprint:data.extensionFingerprint,
    shouldCancel:()=>benchmarkWorkerCancelled,
    onCase:row=>self.postMessage({type:'case',row}),
    onProgress:progress=>self.postMessage({type:'progress',progress}),

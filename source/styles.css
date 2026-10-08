@@ -191,3 +191,36 @@ kbd { font:inherit; border:1px solid var(--line); padding:0 .2rem; }
 #nav button{color:var(--tab-hue,#253744);border-bottom:2px solid var(--tab-hue,#253744)}
 #nav button[aria-selected="true"]{background:var(--tab-hue,#253744);color:#fff;border-color:var(--tab-hue,#253744)}
 #nav [data-id="metrics"]{border-left:3px solid #188d86;border-right:3px solid #bc235a}
+/* Plot choices sit with the charts; the lower panel configures new runs only. */
+#presentation.benchmark-page { grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto; }
+#benchmarkPlotControls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:.4rem .65rem; padding:.45rem .6rem; border:1px solid var(--line); background:white; }
+#benchmarkPlotControls .benchmark-setting { flex:1 1 8rem!important; }
+#benchmarkPlotControls .benchmark-setting:nth-child(1),#benchmarkPlotControls .benchmark-setting:nth-child(2) { flex-basis:11rem!important; }
+#benchmarkPlotControls .benchmark-setting:nth-child(5) { flex-basis:15rem!important; }
+.benchmark-page .benchmark-setting>span { font-size:.78rem; }
+.benchmark-page .benchmark-setting select,.benchmark-page .benchmark-setting input { font-size:.82rem; padding:.25rem .35rem; }
+#benchmarkPlotControls .benchmark-toggle { font-size:.76rem; white-space:nowrap; }
+#benchmarkPlotControls button { font-size:.76rem; }
+.benchmark-interval-note { flex:1 1 22rem; font-size:.69rem; color:var(--muted); }
+.benchmark-page #controls>.benchmark-setting { flex:0 1 9rem; }
+.benchmark-page #controls>.benchmark-setting:nth-of-type(2) { flex-basis:14rem; }
+.benchmark-run-heading { font-size:.84rem; margin-right:.25rem; }
+.benchmark-run-estimate { flex:1 0 100%; font-size:.69rem; color:var(--muted); margin:0; order:10; }
+.benchmark-run-progress { order:11; }
+.benchmark-run-advanced>summary { font-size:.78rem; cursor:pointer; padding:.35rem .5rem; border:1px solid var(--line); }
+.benchmark-run-advanced[open]>summary { background:#e5edf4; }
+.benchmark-run-advanced-body { position:fixed; z-index:10; left:var(--pad); right:var(--pad); bottom:7rem; max-height:65svh; overflow:auto; display:flex; flex-wrap:wrap; gap:.8rem; padding:1rem; background:white; border:1px solid var(--line); box-shadow:0 .4rem 1.5rem #17344833; }
+.benchmark-run-checklist { margin:0; border:1px solid var(--line); padding:.5rem; display:flex; flex-wrap:wrap; align-content:flex-start; gap:.45rem .8rem; font-size:.78rem; flex:1 1 25rem; }
+.benchmark-run-checklist legend { font-weight:650; }
+.benchmark-run-checklist label { display:flex; gap:.3rem; align-items:center; }
+.benchmark-run-limits { flex:1 0 100%; display:flex; flex-wrap:wrap; gap:.45rem .8rem; }
+.benchmark-run-limits>summary { flex:1 0 100%; font-size:.85rem; font-weight:650; margin-bottom:.4rem; }
+.benchmark-run-limits>.setting { display:inline-flex; flex-direction:column; vertical-align:top; width:11.5rem; margin:.3rem; }
+.benchmark-run-limits>.setting>span { min-height:2.4em; }
+.benchmark-run-limits input { width:100%; }
+.benchmark-run-resolution-note { font-size:.73rem; color:var(--muted); margin:.6rem .3rem 0; }
+.benchmark-run-advanced-body .benchmark-number input { width:100%; }
+#view [data-benchmark-curve-hit] { cursor:pointer; }
+#view [data-benchmark-curve-hit]:focus-visible { outline:none; stroke:#19354855; stroke-width:8; }
+#view [data-benchmark-series].is-highlighted text { text-decoration:underline; }
+#view [data-benchmark-curve].is-highlighted>path:first-child { stroke-width:3.5; }

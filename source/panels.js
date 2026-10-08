@@ -29,6 +29,6 @@ function render(overrides={}){
   ctx.reset();ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
   try{({shadows:drawShadows,expansion:drawExpansion,subtraction:drawWallShadows,air:drawAir,terrain:drawTerrain,projection:drawProjection,metrics:drawMetrics,cost:drawCost}[s.scene])(s);addWorkReadouts(s);drawPanel(s);}
   catch(e){console.error(e);setPanel({title:'This configuration could not be completed',body:[e.message,'Reset the scene or use a coarser terrain mesh.'],legend:[],note:'The calculation stopped; the result is incomplete.'});drawPanel(s);$('status').textContent=e.message;window.lastLabError=e.message;}
-  ctx.commit();
+  ctx.commit();if(s.scene==='cost')benchmarkRefreshInspection();
   if(!exporting){syncTransport();updateLive();updateWorkReference(s);if(s.scene==='cost')renderBenchmarkTable();$('phase').value=state.phase;$('phaseVal').textContent=Math.round(state.phase*100)+'%';}
 }
